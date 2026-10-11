@@ -4,13 +4,16 @@ version = "0.1.0"
 requires-python = ">=3.12"
 dependencies = [
     "anthropic>=1.13",
+    "duckdb>=1.5.6",
     "fastapi>=0.143.0",
+    "fsspec>=2026.9.0",
     "pydantic>=2.14.0",
     "uvicorn[standard]>=0.54.0",
 ]
 
 [dependency-groups]
 dev = [
+    "faker>=40.43.0",
     "httpx>=0.28.1",
     "mypy>=2.4.0",
     "pytest>=9.1.1",

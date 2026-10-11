@@ -147,6 +147,12 @@ function findings(column: ColumnProfile, profile: ReturnType<typeof useWorkspace
   if (column.whitespace_count) {
     found.push({ tone: "warn", text: `${plural(column.whitespace_count, "value")} with leading or trailing spaces.` });
   }
+  if (column.leading_zero_count && column.inferred_type === "string") {
+    found.push({
+      tone: "neutral",
+      text: `${plural(column.leading_zero_count, "value")} are digits starting with zero, so the column is read as text, not as a number.`,
+    });
+  }
   for (const key of profile.candidate_keys) {
     if (!key.columns.includes(column.name)) continue;
     const others = key.columns.filter((name) => name !== column.name);

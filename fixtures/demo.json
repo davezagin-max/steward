@@ -44,6 +44,7 @@
     "invalid_count": 0,
     "invalid_shapes": [],
     "whitespace_count": 0,
+    "leading_zero_count": 0,
     "length": {
      "min": 10,
      "max": 10
@@ -81,6 +82,7 @@
     "invalid_count": 0,
     "invalid_shapes": [],
     "whitespace_count": 0,
+    "leading_zero_count": 0,
     "length": {
      "min": 4,
      "max": 4
@@ -151,6 +153,7 @@
     "invalid_count": 0,
     "invalid_shapes": [],
     "whitespace_count": 0,
+    "leading_zero_count": 0,
     "length": {
      "min": 6,
      "max": 6
@@ -311,6 +314,7 @@
     "invalid_count": 0,
     "invalid_shapes": [],
     "whitespace_count": 0,
+    "leading_zero_count": 0,
     "length": {
      "min": 2,
      "max": 11
@@ -362,6 +366,7 @@
     "invalid_count": 0,
     "invalid_shapes": [],
     "whitespace_count": 0,
+    "leading_zero_count": 0,
     "length": {
      "min": 2,
      "max": 11
@@ -413,6 +418,7 @@
     "invalid_count": 0,
     "invalid_shapes": [],
     "whitespace_count": 0,
+    "leading_zero_count": 0,
     "length": {
      "min": 9,
      "max": 11
@@ -464,6 +470,7 @@
     "invalid_count": 0,
     "invalid_shapes": [],
     "whitespace_count": 0,
+    "leading_zero_count": 0,
     "length": {
      "min": 10,
      "max": 10
@@ -613,6 +620,7 @@
     "invalid_count": 0,
     "invalid_shapes": [],
     "whitespace_count": 0,
+    "leading_zero_count": 0,
     "length": {
      "min": 21,
      "max": 35
@@ -676,6 +684,7 @@
     "invalid_count": 0,
     "invalid_shapes": [],
     "whitespace_count": 0,
+    "leading_zero_count": 0,
     "length": {
      "min": 12,
      "max": 35
@@ -745,6 +754,7 @@
     "invalid_count": 0,
     "invalid_shapes": [],
     "whitespace_count": 0,
+    "leading_zero_count": 0,
     "length": {
      "min": 4,
      "max": 16
@@ -1053,6 +1063,7 @@
     "invalid_count": 0,
     "invalid_shapes": [],
     "whitespace_count": 0,
+    "leading_zero_count": 0,
     "length": {
      "min": 2,
      "max": 10
@@ -1217,6 +1228,7 @@
     "invalid_count": 0,
     "invalid_shapes": [],
     "whitespace_count": 0,
+    "leading_zero_count": 178,
     "length": {
      "min": 5,
      "max": 5
@@ -1500,6 +1512,7 @@
     "invalid_count": 0,
     "invalid_shapes": [],
     "whitespace_count": 6,
+    "leading_zero_count": 0,
     "length": {
      "min": 1,
      "max": 7
@@ -1594,6 +1607,7 @@
     "invalid_count": 0,
     "invalid_shapes": [],
     "whitespace_count": 0,
+    "leading_zero_count": 0,
     "length": {
      "min": 1,
      "max": 1
@@ -1644,6 +1658,7 @@
     "invalid_count": 0,
     "invalid_shapes": [],
     "whitespace_count": 0,
+    "leading_zero_count": 0,
     "length": {
      "min": 5,
      "max": 5
@@ -1702,6 +1717,7 @@
     "invalid_count": 0,
     "invalid_shapes": [],
     "whitespace_count": 0,
+    "leading_zero_count": 0,
     "length": {
      "min": 7,
      "max": 13
@@ -1766,6 +1782,7 @@
     "invalid_count": 0,
     "invalid_shapes": [],
     "whitespace_count": 0,
+    "leading_zero_count": 0,
     "length": {
      "min": 10,
      "max": 10
@@ -1932,6 +1949,7 @@
      }
     ],
     "whitespace_count": 0,
+    "leading_zero_count": 0,
     "length": {
      "min": 8,
      "max": 10
@@ -2091,6 +2109,7 @@
     "invalid_count": 0,
     "invalid_shapes": [],
     "whitespace_count": 0,
+    "leading_zero_count": 0,
     "length": {
      "min": 5,
      "max": 8
@@ -2281,6 +2300,7 @@
     "invalid_count": 0,
     "invalid_shapes": [],
     "whitespace_count": 0,
+    "leading_zero_count": 0,
     "length": {
      "min": 6,
      "max": 7
@@ -2453,6 +2473,7 @@
     "invalid_count": 0,
     "invalid_shapes": [],
     "whitespace_count": 0,
+    "leading_zero_count": 0,
     "length": {
      "min": 5,
      "max": 6
@@ -2621,6 +2642,7 @@
     "invalid_count": 0,
     "invalid_shapes": [],
     "whitespace_count": 0,
+    "leading_zero_count": 0,
     "length": {
      "min": 5,
      "max": 7
@@ -2798,6 +2820,7 @@
     "invalid_count": 0,
     "invalid_shapes": [],
     "whitespace_count": 0,
+    "leading_zero_count": 0,
     "length": {
      "min": 1,
      "max": 4
@@ -2974,6 +2997,7 @@
     "invalid_count": 0,
     "invalid_shapes": [],
     "whitespace_count": 0,
+    "leading_zero_count": 0,
     "length": {
      "min": 4,
      "max": 4
@@ -3024,6 +3048,7 @@
     "invalid_count": 0,
     "invalid_shapes": [],
     "whitespace_count": 0,
+    "leading_zero_count": 0,
     "length": {
      "min": 2,
      "max": 2
@@ -3672,150 +3697,7 @@
       "regex": "[A-Z][a-z]{3,} [a-z]'[A-Z][a-z]{3,}"
      }
     ],
-    "distinct_shapes": 7,
-    "values": [
-     {
-      "value": "Ogden",
-      "count": 208
-     },
-     {
-      "value": "Park City",
-      "count": 194
-     },
-     {
-      "value": "Salt Lake City",
-      "count": 194
-     },
-     {
-      "value": "Provo",
-      "count": 191
-     },
-     {
-      "value": "Logan",
-      "count": 176
-     },
-     {
-      "value": "St. George",
-      "count": 176
-     },
-     {
-      "value": "Fresno",
-      "count": 112
-     },
-     {
-      "value": "Sacramento",
-      "count": 110
-     },
-     {
-      "value": "Oakland",
-      "count": 105
-     },
-     {
-      "value": "San Jose",
-      "count": 104
-     },
-     {
-      "value": "San Diego",
-      "count": 102
-     },
-     {
-      "value": "Irvine",
-      "count": 92
-     },
-     {
-      "value": "Denver",
-      "count": 91
-     },
-     {
-      "value": "Carson City",
-      "count": 89
-     },
-     {
-      "value": "Las Vegas",
-      "count": 87
-     },
-     {
-      "value": "Los Angeles",
-      "count": 87
-     },
-     {
-      "value": "Chandler",
-      "count": 84
-     },
-     {
-      "value": "Scottsdale",
-      "count": 83
-     },
-     {
-      "value": "Houston",
-      "count": 82
-     },
-     {
-      "value": "Spokane",
-      "count": 81
-     },
-     {
-      "value": "Dallas",
-      "count": 79
-     },
-     {
-      "value": "Aurora",
-      "count": 75
-     },
-     {
-      "value": "Phoenix",
-      "count": 75
-     },
-     {
-      "value": "Boulder",
-      "count": 74
-     },
-     {
-      "value": "Plano",
-      "count": 73
-     },
-     {
-      "value": "Salem",
-      "count": 50
-     },
-     {
-      "value": "Portland",
-      "count": 49
-     },
-     {
-      "value": "Missoula",
-      "count": 45
-     },
-     {
-      "value": "Roswell",
-      "count": 43
-     },
-     {
-      "value": "Laramie",
-      "count": 40
-     },
-     {
-      "value": "Cheyenne",
-      "count": 35
-     },
-     {
-      "value": "Santa Fe",
-      "count": 33
-     },
-     {
-      "value": "Albuquerque",
-      "count": 32
-     },
-     {
-      "value": "Billings",
-      "count": 32
-     },
-     {
-      "value": "Worcester",
-      "count": 32
-     }
-    ],
-    "values_listed": 35
+    "distinct_shapes": 7
    },
    {
     "name": "property_state",
@@ -3974,6 +3856,7 @@
     "distinct_pct": 4.178,
     "type_conformance_pct": 100.0,
     "values_masked": false,
+    "digit_values_with_leading_zeros": 178,
     "length": {
      "min": 5,
      "max": 5
@@ -3988,150 +3871,7 @@
     "distinct_shapes": 1,
     "matches": [
      "us_zip"
-    ],
-    "values": [
-     {
-      "value": "84063",
-      "count": 74
-     },
-     {
-      "value": "84108",
-      "count": 72
-     },
-     {
-      "value": "84362",
-      "count": 71
-     },
-     {
-      "value": "84698",
-      "count": 71
-     },
-     {
-      "value": "84402",
-      "count": 68
-     },
-     {
-      "value": "84306",
-      "count": 66
-     },
-     {
-      "value": "84346",
-      "count": 66
-     },
-     {
-      "value": "84144",
-      "count": 65
-     },
-     {
-      "value": "84064",
-      "count": 64
-     },
-     {
-      "value": "84686",
-      "count": 64
-     },
-     {
-      "value": "84785",
-      "count": 62
-     },
-     {
-      "value": "84728",
-      "count": 60
-     },
-     {
-      "value": "84405",
-      "count": 57
-     },
-     {
-      "value": "84691",
-      "count": 57
-     },
-     {
-      "value": "84045",
-      "count": 54
-     },
-     {
-      "value": "84136",
-      "count": 53
-     },
-     {
-      "value": "84745",
-      "count": 51
-     },
-     {
-      "value": "84489",
-      "count": 50
-     },
-     {
-      "value": "94179",
-      "count": 42
-     },
-     {
-      "value": "80041",
-      "count": 41
-     },
-     {
-      "value": "94518",
-      "count": 41
-     },
-     {
-      "value": "92148",
-      "count": 39
-     },
-     {
-      "value": "94159",
-      "count": 39
-     },
-     {
-      "value": "85689",
-      "count": 38
-     },
-     {
-      "value": "92125",
-      "count": 38
-     },
-     {
-      "value": "95145",
-      "count": 29
-     },
-     {
-      "value": "99240",
-      "count": 29
-     },
-     {
-      "value": "75072",
-      "count": 28
-     },
-     {
-      "value": "78710",
-      "count": 28
-     },
-     {
-      "value": "80229",
-      "count": 28
-     },
-     {
-      "value": "89569",
-      "count": 28
-     },
-     {
-      "value": "89763",
-      "count": 28
-     },
-     {
-      "value": "98020",
-      "count": 28
-     },
-     {
-      "value": "75034",
-      "count": 27
-     },
-     {
-      "value": "80370",
-      "count": 27
-     }
-    ],
-    "values_listed": 35
+    ]
    },
    {
     "name": "occupancy_code",

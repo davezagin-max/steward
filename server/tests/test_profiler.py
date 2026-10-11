@@ -62,6 +62,9 @@ def test_digit_codes_with_leading_zeros_stay_text(profile: Profile) -> None:
     assert zip_code.role == "category"
     assert [p.name for p in zip_code.named_patterns] == ["us_zip"]
     assert zip_code.numeric is None and zip_code.outliers is None
+    assert (
+        zip_code.leading_zero_count == 178 and column(profile, "fico_score").leading_zero_count == 0
+    )
 
 
 def test_null_and_distinct_counts(profile: Profile, manifest: dict) -> None:  # type: ignore[type-arg]
@@ -156,6 +159,7 @@ def test_ssn_pattern_and_sensitive_hints(profile: Profile) -> None:
         "property_address",
     }
     assert sensitive_hint("product_name", []) == []
+    assert sensitive_hint("surname", []) == ["name contains 'surname'"]
     assert sensitive_hint("customer_name", []) == ["name looks like a person's name"]
 
 
@@ -288,5 +292,12 @@ def test_model_view_lists_code_values_including_the_rare_dirty_ones(profile: Pro
     assert view["values_masked"] is False
     assert {"value": "INV", "count": 8} in view["values"]
     assert view["values_with_outer_whitespace"] == 6
-    city = column_model_view(column(profile, "property_city"))
-    assert city["values_listed"] == 35 and city["distinct_count"] == 69
+    states = column_model_view(column(profile, "property_state"))
+    assert states["values_listed"] == 27
+    # More than 60 distinct values is no longer a code list: the model gets shapes only.
+    for name in ("property_city", "property_zip"):
+        view = column_model_view(column(profile, name))
+        assert "values" not in view and view["distinct_count"] > 60 and view["shapes"]
+    assert (
+        column_model_view(column(profile, "property_zip"))["digit_values_with_leading_zeros"] == 178
+    )

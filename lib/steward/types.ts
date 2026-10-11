@@ -47,6 +47,7 @@ export interface ColumnProfile {
   invalid_count: number;
   invalid_shapes: ShapeCount[];
   whitespace_count: number;
+  leading_zero_count: number;
   length: { min: number; max: number } | null;
   numeric: {
     min: number;

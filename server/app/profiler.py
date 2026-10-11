@@ -61,7 +61,8 @@ SENSITIVE_TOKENS = {
     "ssn", "social", "tin", "itin", "dob", "birth", "birthdate", "birthday", "email", "phone",
     "mobile", "fax", "address", "addr", "street", "passport", "license", "licence", "account",
     "acct", "iban", "card", "salary", "income", "wage", "password", "secret", "gender", "race",
-    "ethnicity", "religion", "diagnosis",
+    "ethnicity", "religion", "diagnosis", "surname", "firstname", "lastname", "fullname",
+    "username", "ein", "routing", "cvv", "pin", "mrn", "latitude", "longitude", "ip",
 }  # fmt: skip
 PERSON_TOKENS = {
     "first", "last", "middle", "full", "sur", "maiden", "given", "family", "borrower", "customer",
@@ -146,6 +147,7 @@ class ColumnProfile(BaseModel):
     invalid_count: int
     invalid_shapes: list[ShapeCount] = Field(max_length=TOP_SHAPES)
     whitespace_count: int
+    leading_zero_count: int
     length: LengthStats | None
     numeric: NumericStats | None
     dates: DateStats | None
@@ -530,6 +532,7 @@ def _profile_column(
         invalid_count=int(invalid_count),
         invalid_shapes=invalid_shapes,
         whitespace_count=int(whitespace),
+        leading_zero_count=int(n_zero_led),
         length=LengthStats(min=int(len_min), max=int(len_max)) if non_null else None,
         numeric=numeric,
         dates=dates,
@@ -765,10 +768,11 @@ def _clip(value: str) -> str:
 def column_model_view(column: ColumnProfile) -> dict[str, Any]:
     """What Claude is told about one column: aggregates and shapes, never rows.
 
-    Raw values appear only for low-cardinality, non-sensitive columns (codes, flags), where
-    the model needs the code list to propose an allowed set. For anything that looks
-    sensitive the view keeps counts, lengths, and shapes and drops every raw value,
-    including minimum, maximum, and outlier examples.
+    Raw text values appear only for non-sensitive columns with at most `CATEGORY_MAX`
+    distinct values (codes, flags), where the model needs the code list to propose an
+    allowed set. Non-sensitive numeric and date columns contribute aggregates (min, max,
+    quartiles, outlier examples). For anything that looks sensitive the view keeps counts,
+    lengths, and shapes and drops every raw value, including minimum and maximum.
     """
     view: dict[str, Any] = {
         "name": column.name,
@@ -789,6 +793,8 @@ def column_model_view(column: ColumnProfile) -> dict[str, Any]:
         }
     if column.whitespace_count:
         view["values_with_outer_whitespace"] = column.whitespace_count
+    if column.leading_zero_count:
+        view["digit_values_with_leading_zeros"] = column.leading_zero_count
     if column.length:
         view["length"] = {"min": column.length.min, "max": column.length.max}
     if column.inferred_type in ("string", "date") or column.role == "identifier":
@@ -812,7 +818,7 @@ def column_model_view(column: ColumnProfile) -> dict[str, Any]:
         view["dates"] = column.dates.model_dump()
     if column.outliers:
         view["outliers"] = column.outliers.model_dump(exclude={"method"})
-    if column.role == "category" and column.top_values:
+    if column.role == "category" and column.top_values and column.distinct_count <= CATEGORY_MAX:
         values = column.top_values
         if len(values) > MODEL_VALUE_LIMIT:
             # Keep the head and the rare tail: rare codes are where the dirty values hide.

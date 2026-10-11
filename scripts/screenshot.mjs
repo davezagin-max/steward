@@ -13,6 +13,7 @@
  *     "gif": { "path": "/", "theme": "dark", "actions": [ ... ] }
  *   }
  * Actions: click, fill ([selector, text]), press, hover, waitFor (selector), wait (ms), scroll (px).
+ * "viewport" is "desktop", "mobile", or an object such as { "width": 1280, "height": 1000 }.
  * Output goes to docs/<name>.png and docs/demo.gif. The GIF needs ffmpeg on PATH.
  */
 import { execFileSync, spawn } from "node:child_process";
@@ -65,7 +66,8 @@ async function perform(page, actions = []) {
 }
 
 async function open(browser, spec, extra = {}) {
-  const viewport = VIEWPORTS[spec.viewport ?? "desktop"];
+  // A named size, or { "width": ..., "height": ... } for a shot that needs more room.
+  const viewport = typeof spec.viewport === "object" ? spec.viewport : VIEWPORTS[spec.viewport ?? "desktop"];
   const theme = spec.theme ?? "light";
   const context = await browser.newContext({
     viewport,

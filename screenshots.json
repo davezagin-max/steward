@@ -1,35 +1,57 @@
 {
   "port": 3230,
   "shots": [
-    { "name": "hero", "path": "/", "theme": "light", "viewport": "desktop", "actions": [{ "click": "button:has-text('high-confidence')" }, { "click": "nav[aria-label='Columns'] >> text=interest_rate" }, { "wait": 200 }, { "click": "summary:has-text('Failing rows')" }, { "wait": 200 }] },
-    { "name": "hero-dark", "path": "/", "theme": "dark", "viewport": "desktop", "actions": [{ "click": "button:has-text('high-confidence')" }, { "click": "nav[aria-label='Columns'] >> text=interest_rate" }, { "wait": 200 }, { "click": "summary:has-text('Failing rows')" }, { "wait": 200 }] },
-    { "name": "first-screen", "path": "/", "theme": "light", "viewport": "desktop", "actions": [{ "waitFor": "h2" }] },
-    { "name": "mobile", "path": "/", "theme": "light", "viewport": "mobile", "actions": [{ "waitFor": "h2" }] },
-    { "name": "mobile-dark", "path": "/", "theme": "dark", "viewport": "mobile", "actions": [{ "click": "nav[aria-label='Views'] >> text=Review queue" }, { "wait": 200 }] },
-    { "name": "column", "path": "/", "theme": "light", "viewport": "desktop", "fullPage": true, "actions": [{ "click": "nav[aria-label='Columns'] >> text=occupancy_code" }, { "wait": 200 }, { "click": "summary:has-text('Failing rows')" }, { "click": "summary:has-text('Rule as data')" }] },
-    { "name": "relationships", "path": "/", "theme": "light", "viewport": "desktop", "actions": [{ "click": "nav[aria-label='Columns'] >> text=Cross-column" }, { "wait": 200 }] },
-    { "name": "queue", "path": "/", "theme": "light", "viewport": "desktop", "actions": [{ "click": "nav[aria-label='Views'] >> text=Review queue" }, { "wait": 200 }] },
-    { "name": "contract", "path": "/", "theme": "dark", "viewport": "desktop", "actions": [{ "click": "button:has-text('high-confidence')" }, { "click": "nav[aria-label='Views'] >> text=Exports" }, { "wait": 200 }] },
-    { "name": "quality", "path": "/", "theme": "light", "viewport": "desktop", "actions": [{ "click": "button:has-text('high-confidence')" }, { "click": "nav[aria-label='Views'] >> text=Exports" }, { "click": "button:has-text('Quality report')" }, { "wait": 200 }] },
-    { "name": "audit", "path": "/", "theme": "light", "viewport": "desktop", "actions": [{ "click": "button:has-text('high-confidence')" }, { "click": "button:has-text('Audit log')" }, { "wait": 300 }] },
-    { "name": "answer-key", "path": "/", "theme": "light", "viewport": "desktop", "actions": [{ "click": "button:has-text('planted problems')" }, { "wait": 300 }] },
-    { "name": "live-panel", "path": "/", "theme": "light", "viewport": "desktop", "actions": [{ "click": "button:has-text('Use your own data')" }, { "wait": 300 }] }
+    {"name": "hero", "path": "/", "theme": "light", "viewport": {"width": 1280, "height": 1010}, "actions": [{"click": "button:has-text('high-confidence')"}, {"click": "nav[aria-label='Columns'] >> text=interest_rate"}, {"wait": 200}, {"click": "summary:has-text('Failing rows')"}, {"wait": 200}]},
+    {"name": "queue", "path": "/", "theme": "light", "viewport": "desktop", "actions": [{"click": "nav[aria-label='Views'] >> text=Review queue"}, {"wait": 200}]},
+    {"name": "relationships", "path": "/", "theme": "light", "viewport": "desktop", "actions": [{"click": "nav[aria-label='Columns'] >> text=Cross-column"}, {"wait": 200}]},
+    {"name": "contract-dark", "path": "/", "theme": "dark", "viewport": "desktop", "actions": [{"click": "button:has-text('high-confidence')"}, {"click": "nav[aria-label='Views'] >> text=Exports"}, {"wait": 200}]},
+    {"name": "audit", "path": "/", "theme": "light", "viewport": "desktop", "actions": [{"click": "button:has-text('high-confidence')"}, {"click": "nav[aria-label='Columns'] >> text=fico_score"}, {"click": "li:has-text('fico_score is between') >> button:has-text('Edit')"}, {"fill": ["li:has-text('Numeric range') >> input[type=number] >> nth=0", "620"]}, {"click": "button:has-text('Save and approve')"}, {"click": "button:has-text('Edit') >> nth=0"}, {"fill": ["textarea", "Credit score of the primary borrower at origination, on the FICO 300 to 850 scale."]}, {"click": "button:has-text('Save as pending')"}, {"click": "button:has-text('Reject') >> nth=0"}, {"click": "button:has-text('Audit log')"}, {"wait": 300}]},
+    {"name": "mobile", "path": "/", "theme": "light", "viewport": "mobile", "actions": [{"waitFor": "h2"}]},
+    {"name": "mobile-dark", "path": "/", "theme": "dark", "viewport": "mobile", "actions": [{"click": "button:has-text('high-confidence')"}, {"click": "nav[aria-label='Views'] >> text=Exports"}, {"click": "button:has-text('Quality report')"}, {"wait": 200}]}
   ],
   "gif": {
     "path": "/",
     "theme": "light",
     "actions": [
-      { "wait": 700 },
-      { "click": "button:has-text('high-confidence')" },
-      { "wait": 1000 },
-      { "click": "nav[aria-label='Columns'] >> text=occupancy_code" },
-      { "wait": 800 },
-      { "click": "summary:has-text('Failing rows')" },
-      { "wait": 1200 },
-      { "click": "nav[aria-label='Views'] >> text=Review queue" },
-      { "wait": 1000 },
-      { "click": "nav[aria-label='Views'] >> text=Exports" },
-      { "wait": 1400 }
+      {
+        "wait": 900
+      },
+      {
+        "click": "nav[aria-label='Columns'] >> text=occupancy_code"
+      },
+      {
+        "wait": 900
+      },
+      {
+        "click": "summary:has-text('Failing rows')"
+      },
+      {
+        "wait": 1300
+      },
+      {
+        "click": "button:has-text('high-confidence')"
+      },
+      {
+        "wait": 1100
+      },
+      {
+        "click": "nav[aria-label='Views'] >> text=Review queue"
+      },
+      {
+        "wait": 1200
+      },
+      {
+        "click": "nav[aria-label='Views'] >> text=Exports"
+      },
+      {
+        "wait": 1500
+      },
+      {
+        "click": "button:has-text('Quality report')"
+      },
+      {
+        "wait": 1500
+      }
     ]
   }
 }

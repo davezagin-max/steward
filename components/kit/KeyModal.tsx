@@ -89,7 +89,7 @@ export function KeyModal({ open, hasKey, onClose }: KeyModalProps) {
           Remember for this tab (sessionStorage, cleared when the tab closes)
         </label>
         <p className="text-xs text-muted">
-          No key? The demo replays recorded runs.{" "}
+          No key? The bundled sample works without one.{" "}
           <a
             href="https://platform.claude.com/settings/keys"
             target="_blank"

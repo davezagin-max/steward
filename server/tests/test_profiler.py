@@ -164,6 +164,10 @@ def test_ssn_pattern_and_sensitive_hints(profile: Profile) -> None:
     assert sensitive_hint("product_name", []) == []
     assert sensitive_hint("surname", []) == ["name contains 'surname'"]
     assert sensitive_hint("customer_name", []) == ["name looks like a person's name"]
+    assert sensitive_hint("applicant_sex", []) == ["name contains 'sex'"]
+    # The known limit of a name-based hint: a header it has no word for is not masked.
+    # The UI shows exactly what would be sent for each column before a run.
+    assert sensitive_hint("m_teri_ad", []) == []
 
 
 # ----------------------------------------------------------------- outliers

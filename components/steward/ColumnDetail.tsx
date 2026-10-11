@@ -283,7 +283,7 @@ function ModelView({ column }: { column: ColumnProfile }) {
     <details className="group rounded-lg border border-border bg-bg">
       <summary className="flex cursor-pointer list-none flex-wrap items-center gap-x-2 gap-y-1 px-4 py-2.5 text-[13px] font-semibold [&::-webkit-details-marker]:hidden">
         <Icon name="chevron" className="size-3.5 text-muted transition-transform group-open:rotate-90" />
-        What Claude was shown for this column
+        {bundle.run ? "What Claude was shown for this column" : "What Claude would be shown for this column"}
         <span className="font-normal text-muted">
           {column.sensitive
             ? "aggregates and shapes only; every raw value is masked"

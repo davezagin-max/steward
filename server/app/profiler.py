@@ -60,8 +60,9 @@ SENSITIVE_PATTERNS = {"email", "us_ssn", "us_phone"}
 SENSITIVE_TOKENS = {
     "ssn", "social", "tin", "itin", "dob", "birth", "birthdate", "birthday", "email", "phone",
     "mobile", "fax", "address", "addr", "street", "passport", "license", "licence", "account",
-    "acct", "iban", "card", "salary", "income", "wage", "password", "secret", "gender", "race",
-    "ethnicity", "religion", "diagnosis", "surname", "firstname", "lastname", "fullname",
+    "acct", "iban", "card", "salary", "income", "wage", "password", "secret", "gender", "sex",
+    "race", "ethnicity", "nationality", "citizenship", "religion", "marital", "disability",
+    "diagnosis", "surname", "firstname", "lastname", "fullname",
     "username", "ein", "routing", "cvv", "pin", "mrn", "latitude", "longitude", "ip",
 }  # fmt: skip
 PERSON_TOKENS = {

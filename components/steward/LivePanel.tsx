@@ -162,6 +162,13 @@ export function LivePanel({ open, onClose, apiUrl, bundle, isSample, state, onUp
               Both reuse one cached prompt that holds the masked profile: Claude sees aggregates and value shapes, never rows.
               {bundle.run ? " Running replaces the current suggestions and the review of them." : ""}
             </p>
+            {!isSample && (
+              <p className="text-xs">
+                Check before you run: each column has a panel showing exactly what Claude gets. Columns whose name or values look
+                personal are masked down to shapes. Any other column with 60 or fewer distinct values has those values listed, so a
+                short code list under an unusual header is sent as is.
+              </p>
+            )}
             <div className="flex flex-wrap items-center gap-2">
               {state.status === "assessing" || state.status === "running_rules" ? (
                 <Button variant="danger" onClick={onCancel}>

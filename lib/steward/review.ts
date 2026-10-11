@@ -11,13 +11,15 @@
  * workflow is unit-tested without a browser.
  */
 import { describeRule, sameRule } from "./rules";
-import type {
-  AssessmentRun,
-  Confidence,
-  RelationshipKind,
-  Rule,
-  Sensitivity,
-  Severity,
+import {
+  SENSITIVITIES,
+  SEVERITIES,
+  type AssessmentRun,
+  type Confidence,
+  type RelationshipKind,
+  type Rule,
+  type Sensitivity,
+  type Severity,
 } from "./types";
 
 export type ItemKind = "definition" | "classification" | "rule" | "relationship";
@@ -337,7 +339,8 @@ export function restoreState(
     if (!candidate || !statuses.has(candidate.status as Status)) continue;
     const value = candidate.value;
     if (!value || value.kind !== item.proposed.kind) continue;
-    if (value.kind === "rule" && !isValidRule(value.rule)) continue;
+    if (value.kind === "rule" && !(isValidRule(value.rule) && SEVERITIES.includes(value.severity))) continue;
+    if (value.kind === "classification" && !SENSITIVITIES.includes(value.sensitivity)) continue;
     if (value.kind === "definition" && typeof value.text !== "string") continue;
     if (value.kind === "relationship" && typeof value.description !== "string") continue;
     fresh.decisions[item.id] = {

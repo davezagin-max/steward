@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { resultFor } from "@/lib/steward/exports";
 import { decisionOf } from "@/lib/steward/review";
 import { useWorkspace } from "./context";
@@ -40,6 +40,20 @@ export function ColumnRail({ selection, onSelect }: { selection: Selection; onSe
   const cross = items.filter((item) => item.column === null);
   const crossPending = cross.filter((item) => decisionOf(review, item).status === "pending").length;
   const selectedName = selection.type === "column" ? selection.name : null;
+  const listRef = useRef<HTMLUListElement>(null);
+
+  // Previous/next and "Open" in the queue change the selection from outside the rail.
+  // Scroll only the rail's own list, never the page.
+  useEffect(() => {
+    const list = listRef.current;
+    const current = list?.querySelector<HTMLElement>("[aria-current]");
+    if (!list || !current) return;
+    const top = current.offsetTop - list.offsetTop;
+    if (top < list.scrollTop) list.scrollTop = top - 6;
+    else if (top + current.offsetHeight > list.scrollTop + list.clientHeight) {
+      list.scrollTop = top + current.offsetHeight - list.clientHeight + 6;
+    }
+  }, [selection]);
 
   return (
     <>
@@ -86,7 +100,7 @@ export function ColumnRail({ selection, onSelect }: { selection: Selection; onSe
             />
           </div>
         </div>
-        <ul className="flex-1 overflow-y-auto p-1.5">
+        <ul ref={listRef} className="relative flex-1 overflow-y-auto p-1.5">
           <li>
             <button
               type="button"

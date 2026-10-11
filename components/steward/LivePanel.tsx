@@ -150,7 +150,7 @@ export function LivePanel({ open, onClose, apiUrl, bundle, isSample, state, onUp
                 ? "A key is set for this tab. It is sent only with the assessment request, in a header, and never stored."
                 : "Needed for Claude's suggestions only. It stays in this tab and travels in a request header."}
             </p>
-            <Button onClick={openKeyModal}>
+            <Button disabled={!apiUrl} onClick={openKeyModal}>
               <Icon name="key" />
               {isLive ? "Change key" : "Add key"}
             </Button>

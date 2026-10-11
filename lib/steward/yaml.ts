@@ -5,7 +5,7 @@
  * it stays tiny and its output order is exactly the insertion order of the input, which
  * keeps the contract diff-friendly. Strings are written plain only when that is
  * unambiguous; everything else is double-quoted using JSON escaping, which YAML accepts.
- * `tests/steward/yaml.test.ts` round-trips the output through a real YAML parser.
+ * `tests/steward/exports.test.ts` round-trips the output through a real YAML parser.
  */
 export type Yaml = null | boolean | number | string | Yaml[] | { [key: string]: Yaml | undefined };
 

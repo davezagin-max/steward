@@ -32,10 +32,21 @@ export function epochDayToIso(day: number): string {
   return new Date(Math.round(day) * 86_400_000).toISOString().slice(0, 10);
 }
 
-export function formatTime(iso: string): string {
+/**
+ * When an audit entry was written, in local time: the time alone for today, with the date
+ * in front for any other day. A saved review can be reopened days later.
+ */
+export function formatTime(iso: string, now: Date = new Date()): string {
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return iso;
-  return date.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+  const time = date.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+  if (date.toDateString() === now.toDateString()) return time;
+  const day = date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: date.getFullYear() === now.getFullYear() ? undefined : "numeric",
+  });
+  return `${day}, ${time}`;
 }
 
 export function plural(count: number, one: string, many = `${one}s`): string {

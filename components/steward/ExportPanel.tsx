@@ -32,9 +32,26 @@ function GlossaryPreview({ rows }: { rows: string[][] }) {
   if (rows.length === 0) {
     return <Notice title="The glossary is empty">Approve a column&apos;s business definition and it appears here as a term.</Notice>;
   }
+  const chip = (classification: string) =>
+    classification ? <SensitivityChip value={classification as Sensitivity} /> : <span className="text-xs text-muted">not approved</span>;
   return (
-    <div className="overflow-x-auto rounded-lg border border-border bg-bg">
-      <table className="w-full min-w-[640px] text-left text-[13px]">
+    <div className="overflow-hidden rounded-lg border border-border bg-bg">
+      {/* Five columns do not fit a phone: the same rows as a list. */}
+      <ul className="divide-y divide-border sm:hidden">
+        {rows.map(([term, column, definition, classification, type]) => (
+          <li key={column} className="flex flex-col gap-1 px-3 py-2.5 text-[13px]">
+            <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
+              <span className="font-medium">{term}</span>
+              {chip(classification)}
+            </div>
+            <p className="break-all font-mono text-xs text-muted">
+              {column} · {type}
+            </p>
+            <p>{definition}</p>
+          </li>
+        ))}
+      </ul>
+      <table className="hidden w-full text-left text-[13px] sm:table">
         <thead className="bg-surface text-xs text-muted">
           <tr>
             {["Term", "Column", "Definition", "Classification", "Type"].map((label) => (
@@ -50,9 +67,7 @@ function GlossaryPreview({ rows }: { rows: string[][] }) {
               <td className="whitespace-nowrap px-3 py-2 font-medium">{term}</td>
               <td className="px-3 py-2 font-mono text-xs">{column}</td>
               <td className="px-3 py-2">{definition}</td>
-              <td className="px-3 py-2">
-                {classification ? <SensitivityChip value={classification as Sensitivity} /> : <span className="text-xs text-muted">not approved</span>}
-              </td>
+              <td className="px-3 py-2">{chip(classification)}</td>
               <td className="px-3 py-2 text-xs text-muted">{type}</td>
             </tr>
           ))}
@@ -83,31 +98,47 @@ function QualityPreview({ ctx }: { ctx: ExportContext }) {
           </div>
         ))}
       </dl>
-      <div className="overflow-x-auto rounded-lg border border-border bg-bg">
-        <table className="w-full min-w-[640px] text-left text-[13px]">
+      <div className="overflow-hidden rounded-lg border border-border bg-bg">
+        <table className="w-full text-left text-[13px]">
           <thead className="bg-surface text-xs text-muted">
             <tr>
               <th scope="col" className="px-3 py-2 font-medium">Rule</th>
               <th scope="col" className="px-3 py-2 font-medium">Severity</th>
-              <th scope="col" className="px-3 py-2 text-right font-medium">Checked</th>
-              <th scope="col" className="px-3 py-2 text-right font-medium">Failed</th>
-              <th scope="col" className="w-40 px-3 py-2 font-medium">Pass rate</th>
+              <th scope="col" className="hidden px-3 py-2 text-right font-medium sm:table-cell">Checked</th>
+              <th scope="col" className="hidden px-3 py-2 text-right font-medium sm:table-cell">Failed</th>
+              <th scope="col" className="hidden w-40 px-3 py-2 font-medium sm:table-cell">Pass rate</th>
             </tr>
           </thead>
           <tbody>
             {summary.rules.map((rule) => (
-              <tr key={rule.id} className="border-t border-border">
-                <td className="px-3 py-2 font-medium">{describeRule(rule.rule)}</td>
+              <tr key={rule.id} className="border-t border-border align-top">
+                <td className="px-3 py-2">
+                  <span className="break-words font-medium">{describeRule(rule.rule)}</span>
+                  {/* On a phone the three number columns are hidden, so the result goes here. */}
+                  <span className="mt-0.5 block text-xs tabular-nums sm:hidden">
+                    {!rule.result ? (
+                      <span className="text-warn">Not run since it was edited</span>
+                    ) : rule.result.failed ? (
+                      <span className="font-semibold text-danger">
+                        {formatInt(rule.result.failed)} of {formatInt(rule.result.evaluated)} fail
+                      </span>
+                    ) : (
+                      <span className="text-success">all {formatInt(rule.result.evaluated)} pass</span>
+                    )}
+                  </span>
+                </td>
                 <td className="px-3 py-2">
                   <SeverityChip severity={rule.severity} />
                 </td>
                 {rule.result ? (
                   <>
-                    <td className="px-3 py-2 text-right font-mono tabular-nums">{formatInt(rule.result.evaluated)}</td>
-                    <td className={`px-3 py-2 text-right font-mono tabular-nums ${rule.result.failed ? "font-semibold text-danger" : "text-muted"}`}>
+                    <td className="hidden px-3 py-2 text-right font-mono tabular-nums sm:table-cell">{formatInt(rule.result.evaluated)}</td>
+                    <td
+                      className={`hidden px-3 py-2 text-right font-mono tabular-nums sm:table-cell ${rule.result.failed ? "font-semibold text-danger" : "text-muted"}`}
+                    >
                       {formatInt(rule.result.failed)}
                     </td>
-                    <td className="px-3 py-2">
+                    <td className="hidden px-3 py-2 sm:table-cell">
                       <div className="flex items-center gap-2">
                         <PassFailBar passed={rule.result.passed} failed={rule.result.failed} />
                         <span className="w-14 shrink-0 text-right font-mono text-xs tabular-nums">
@@ -117,7 +148,7 @@ function QualityPreview({ ctx }: { ctx: ExportContext }) {
                     </td>
                   </>
                 ) : (
-                  <td colSpan={3} className="px-3 py-2 text-xs text-warn">
+                  <td colSpan={3} className="hidden px-3 py-2 text-xs text-warn sm:table-cell">
                     Not run since it was edited
                   </td>
                 )}

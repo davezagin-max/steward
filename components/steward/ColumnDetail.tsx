@@ -9,17 +9,18 @@ import { ClassificationBlock, DefinitionBlock, RejectedRules, RuleList } from ".
 import { Button, Card, Chip, Code, ConfidenceChip, Eyebrow, Icon, Notice, RawValue, SensitivityChip } from "./ui";
 
 function Stat({ label, value, note, tone }: { label: string; value: string; note?: string; tone?: "danger" | "warn" }) {
+  // Long values (an ISO date) step down a size instead of being cut off.
+  const size = value.length > 8 ? "text-[13px] leading-[22px]" : "text-[15px]";
   return (
     <div className="flex min-w-0 flex-col gap-0.5 bg-bg px-3.5 py-2.5">
       <dt className="truncate text-[11px] font-medium uppercase tracking-wide text-muted">{label}</dt>
-      <dd className={`truncate font-mono text-[15px] font-medium tabular-nums ${tone === "danger" ? "text-danger" : tone === "warn" ? "text-warn" : ""}`}>
+      <dd
+        className={`truncate font-mono font-medium tabular-nums ${size} ${tone === "danger" ? "text-danger" : tone === "warn" ? "text-warn" : ""}`}
+        title={value}
+      >
         {value}
       </dd>
-      {note && (
-        <dd className="truncate text-[11px] text-muted" title={note}>
-          {note}
-        </dd>
-      )}
+      {note && <dd className="text-[11px] leading-snug text-muted">{note}</dd>}
     </div>
   );
 }
@@ -110,9 +111,9 @@ function Shapes({ column }: { column: ColumnProfile }) {
     <ul className="flex flex-col gap-1.5">
       {column.shapes.map((shape) => (
         <li key={shape.shape} className="grid grid-cols-[1fr_auto] items-baseline gap-x-3 text-xs">
-          <span className="min-w-0">
+          <span className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
             <RawValue value={shape.shape} />
-            <span className="ml-2 break-all font-mono text-[11px] text-muted">{shape.regex}</span>
+            <span className="min-w-0 break-all font-mono text-[11px] text-muted">{shape.regex}</span>
           </span>
           <span className="font-mono tabular-nums text-muted">
             {formatInt(shape.count)} · {formatPct(shape.pct, 2)}
@@ -284,7 +285,11 @@ function ModelView({ column }: { column: ColumnProfile }) {
         <Icon name="chevron" className="size-3.5 text-muted transition-transform group-open:rotate-90" />
         What Claude was shown for this column
         <span className="font-normal text-muted">
-          {column.sensitive ? "aggregates and shapes only; every raw value is masked" : "aggregates, shapes, and the code list; never rows"}
+          {column.sensitive
+            ? "aggregates and shapes only; every raw value is masked"
+            : "values" in view
+              ? "aggregates, shapes, and the code list; never rows"
+              : "aggregates and shapes; never rows"}
         </span>
       </summary>
       <div className="border-t border-border px-4 py-3">
@@ -327,7 +332,7 @@ export function ColumnDetail({ name }: { name: string }) {
           <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5">
             <h2 className="break-all font-mono text-xl font-semibold tracking-tight">{column.name}</h2>
             <Chip>{column.inferred_type}</Chip>
-            <Chip>{column.role}</Chip>
+            {column.role !== column.inferred_type && <Chip>{column.role}</Chip>}
             {classDecision?.value.kind === "classification" && classDecision.status !== "rejected" && (
               <SensitivityChip value={classDecision.value.sensitivity} proposed={classDecision.status !== "approved"} />
             )}

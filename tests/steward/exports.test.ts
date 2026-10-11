@@ -7,6 +7,7 @@ import {
   contractYaml,
   glossaryCsv,
   glossaryRows,
+  glossaryTerm,
   qualityReportMarkdown,
   qualitySummary,
   resultFor,
@@ -145,6 +146,18 @@ describe("business glossary", () => {
     expect(csv.split("\r\n")[0]).toBe("term,column,definition,classification,data_type,approved_by,approved_at");
     expect(csv.trimEnd().split("\r\n")).toHaveLength(3);
     expect(glossaryCsv(context(initialState(items))).trim()).toBe("term,column,definition,classification,data_type,approved_by,approved_at");
+  });
+
+  it("writes terms as words, upper-casing only known abbreviations", () => {
+    expect(["fico_score", "mi_coverage_pct", "original_upb", "loan_id", "created_day", "age", "__x__"].map(glossaryTerm)).toEqual([
+      "FICO Score",
+      "MI Coverage Pct",
+      "Original UPB",
+      "Loan ID",
+      "Created Day",
+      "Age",
+      "X",
+    ]);
   });
 });
 

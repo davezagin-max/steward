@@ -1,9 +1,8 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { resultFor } from "@/lib/steward/exports";
 import { formatInt } from "@/lib/steward/format";
-import { decisionOf } from "@/lib/steward/review";
+import { matchPlanted } from "@/lib/steward/planted";
 import { useWorkspace } from "./context";
 import { Button, Chip, Icon, StatusChip } from "./ui";
 
@@ -23,13 +22,8 @@ export function SampleKey({ open, onClose }: { open: boolean; onClose: () => voi
     if (!open && dialog.open) dialog.close();
   }, [open]);
 
-  const rows = bundle.planted.map((issue) => {
-    const item = items.find((candidate) => candidate.id === `rule:${issue.rule_id}`);
-    const decision = item ? decisionOf(review, item) : null;
-    const result = item && decision?.value.kind === "rule" ? resultFor(results, item.id, decision.value.rule) : null;
-    return { issue, decision, found: result?.failed ?? null };
-  });
-  const caught = rows.filter((row) => row.found === row.issue.count).length;
+  const rows = matchPlanted(bundle.planted, items, review, results, bundle.catalog);
+  const caught = rows.filter((row) => row.caught).length;
 
   return (
     <dialog
@@ -57,18 +51,18 @@ export function SampleKey({ open, onClose }: { open: boolean; onClose: () => voi
             <Icon name="x" />
           </Button>
         </header>
-        <div className="overflow-x-auto rounded-lg border border-border">
-          <table className="w-full min-w-[560px] text-left text-[13px]">
+        <div className="overflow-hidden rounded-lg border border-border">
+          <table className="w-full text-left text-[13px]">
             <thead className="bg-surface text-xs text-muted">
               <tr>
                 <th scope="col" className="px-3 py-2 font-medium">Planted problem</th>
-                <th scope="col" className="px-3 py-2 text-right font-medium">Rows planted</th>
-                <th scope="col" className="px-3 py-2 text-right font-medium">Rows the rule fails</th>
+                <th scope="col" className="hidden px-3 py-2 text-right font-medium sm:table-cell">Rows planted</th>
+                <th scope="col" className="hidden px-3 py-2 text-right font-medium sm:table-cell">Rows the rule fails</th>
                 <th scope="col" className="px-3 py-2 font-medium">Rule in the review</th>
               </tr>
             </thead>
             <tbody>
-              {rows.map(({ issue, decision, found }) => (
+              {rows.map(({ issue, decision, found, caught: exact }) => (
                 <tr key={issue.id} className="border-t border-border align-top">
                   <td className="px-3 py-2">
                     <button
@@ -81,9 +75,13 @@ export function SampleKey({ open, onClose }: { open: boolean; onClose: () => voi
                     >
                       {issue.description}
                     </button>
+                    {/* On a phone the two number columns are hidden, so the counts go here. */}
+                    <span className={`mt-0.5 block text-xs tabular-nums sm:hidden ${exact ? "text-success" : "text-warn"}`}>
+                      {formatInt(issue.count)} planted · {found === null ? "no rule result" : `the rule fails ${formatInt(found)}`}
+                    </span>
                   </td>
-                  <td className="px-3 py-2 text-right font-mono tabular-nums">{formatInt(issue.count)}</td>
-                  <td className={`px-3 py-2 text-right font-mono tabular-nums ${found === issue.count ? "text-success" : "text-warn"}`}>
+                  <td className="hidden px-3 py-2 text-right font-mono tabular-nums sm:table-cell">{formatInt(issue.count)}</td>
+                  <td className={`hidden px-3 py-2 text-right font-mono tabular-nums sm:table-cell ${exact ? "text-success" : "text-warn"}`}>
                     {found === null ? "n/a" : formatInt(found)}
                   </td>
                   <td className="px-3 py-2">

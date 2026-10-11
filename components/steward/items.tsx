@@ -117,9 +117,13 @@ export function DefinitionBlock({ item }: { item: ReviewItem }) {
   return (
     <div className="flex flex-col gap-2 px-4 py-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <label htmlFor={inputId} className="text-[11px] font-semibold uppercase tracking-wide text-muted">
-          Business definition
-        </label>
+        {draft === null ? (
+          <h4 className="text-[11px] font-semibold uppercase tracking-wide text-muted">Business definition</h4>
+        ) : (
+          <label htmlFor={inputId} className="text-[11px] font-semibold uppercase tracking-wide text-muted">
+            Business definition
+          </label>
+        )}
         <StatusChip status={decision.status} edited={decision.edited} />
       </div>
       {draft === null ? (
@@ -162,9 +166,13 @@ export function ClassificationBlock({ item }: { item: ReviewItem }) {
   return (
     <div className="flex flex-col gap-2 px-4 py-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <label htmlFor={inputId} className="text-[11px] font-semibold uppercase tracking-wide text-muted">
-          Sensitivity class
-        </label>
+        {draft === null ? (
+          <h4 className="text-[11px] font-semibold uppercase tracking-wide text-muted">Sensitivity class</h4>
+        ) : (
+          <label htmlFor={inputId} className="text-[11px] font-semibold uppercase tracking-wide text-muted">
+            Sensitivity class
+          </label>
+        )}
         <StatusChip status={decision.status} edited={decision.edited} />
       </div>
       {draft === null ? (

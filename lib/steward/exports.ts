@@ -174,10 +174,17 @@ export function contractYaml(ctx: ExportContext): string {
   ]);
 }
 
-function titleCase(name: string): string {
+/** Abbreviations that read wrong in title case. Anything else is capitalized as a word. */
+const ACRONYMS = new Set(
+  "id ssn dob ein tin ltv dti upb mi fico apr arm url ip uuid sku usd utc".split(" "),
+);
+
+/** A glossary term from a column name: `borrower_ssn` becomes `Borrower SSN`. */
+export function glossaryTerm(name: string): string {
   return name
     .split("_")
-    .map((word) => (word.length <= 3 && word !== "zip" ? word.toUpperCase() : word[0].toUpperCase() + word.slice(1)))
+    .filter(Boolean)
+    .map((word) => (ACRONYMS.has(word) ? word.toUpperCase() : word[0].toUpperCase() + word.slice(1)))
     .join(" ");
 }
 
@@ -199,7 +206,7 @@ export function glossaryRows(ctx: ExportContext): string[][] {
     const classification = classes.get(item.column);
     const approval = lastApproval(ctx.state.audit, item.id);
     return [
-      titleCase(item.column ?? ""),
+      glossaryTerm(item.column ?? ""),
       item.column ?? "",
       decision.value.kind === "definition" ? decision.value.text : "",
       classification?.kind === "classification" ? classification.sensitivity : "",

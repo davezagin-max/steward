@@ -175,7 +175,9 @@ export function Workbench() {
 
   async function onRun() {
     if (!apiUrl || !apiKey) return;
-    const before = bundle;
+    // Kept so a run that fails or is cancelled puts back exactly what was on screen,
+    // including the review of it.
+    const before = { bundle, store, extraResults };
     const working: Bundle = { ...bundle, meta: null, run: EMPTY_RUN, results: {} };
     setBundle(working);
     setStore(storeFor(working, false));
@@ -197,9 +199,9 @@ export function Workbench() {
       abort.current.signal,
     );
     if (!response.ok) {
-      // Nothing usable arrived: put the previous suggestions back.
-      setBundle(before);
-      setStore(storeFor(before, isSample && before === DEMO_BUNDLE));
+      setBundle(before.bundle);
+      setStore(before.store);
+      setExtraResults(before.extraResults);
       return setLive({
         status: "error",
         message: abort.current.signal.aborted ? "The run was cancelled." : response.error.message,

@@ -224,7 +224,9 @@ export interface PlantedIssue {
   columns: string[];
   description: string;
   count: number;
+  /** Id and type of the rule the generator's manifest pairs with this problem. */
   rule_id: string;
+  rule_type: string;
   suggested: boolean;
 }
 

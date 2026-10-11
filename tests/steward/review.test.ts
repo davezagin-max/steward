@@ -149,8 +149,15 @@ describe("restoreState", () => {
       },
       audit: [{ itemId: "def:not_a_column", at: NOW, label: "x", before: {}, after: {} }, "junk"],
     };
+    const classification = items.find((item) => item.kind === "classification" && item.id !== items[1].id)!;
+    const secondRule = items.filter((item) => item.kind === "rule")[1];
+    Object.assign(saved.decisions, {
+      [classification.id]: { status: "approved", value: { kind: "classification", sensitivity: "Top Secret" } },
+      [secondRule.id]: { status: "approved", value: { ...secondRule.proposed, severity: "fatal" } },
+    });
     const restored = restoreState(saved, items, isValidRule)!;
     expect(countItems(restored, items)).toMatchObject({ approved: 0, rejected: 1 });
+    expect(restored.decisions[classification.id]).toEqual({ status: "pending", value: classification.proposed, edited: false });
     expect(restored.decisions["def:not_a_column"]).toBeUndefined();
     expect(restored.audit).toEqual([]);
     expect(restoreState("nonsense", items, isValidRule)).toBeNull();

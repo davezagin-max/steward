@@ -7883,6 +7883,7 @@
    "description": "14 loans appear twice: 8 exact double-loads and 6 stale versions that disagree on rate or FICO.",
    "count": 28,
    "rule_id": "r_46427a9996",
+   "rule_type": "unique",
    "suggested": true
   },
   {
@@ -7895,6 +7896,7 @@
    "description": "The same 14 duplicated loans also break the composite servicer key.",
    "count": 28,
    "rule_id": "r_a40c1a69e3",
+   "rule_type": "unique",
    "suggested": true
   },
   {
@@ -7906,6 +7908,7 @@
    "description": "Origination date is missing on 7 loans.",
    "count": 7,
    "rule_id": "r_cb6aabfc6b",
+   "rule_type": "not_null",
    "suggested": true
   },
   {
@@ -7917,6 +7920,7 @@
    "description": "ZIP code is missing on 60 loans.",
    "count": 60,
    "rule_id": "r_48d51c5404",
+   "rule_type": "not_null",
    "suggested": true
   },
   {
@@ -7928,6 +7932,7 @@
    "description": "FICO score is missing on 150 loans.",
    "count": 150,
    "rule_id": "r_582d8a3833",
+   "rule_type": "not_null",
    "suggested": true
   },
   {
@@ -7940,6 +7945,7 @@
    "description": "23 insured loans (BPMI or LPMI) have no coverage percentage.",
    "count": 23,
    "rule_id": "r_b68d12fd1d",
+   "rule_type": "conditional_not_null",
    "suggested": true
   },
   {
@@ -7951,6 +7957,7 @@
    "description": "18 first-payment dates are not valid ISO dates (US format, compact format, 30 February, zero date).",
    "count": 18,
    "rule_id": "r_36ee51e8ea",
+   "rule_type": "parses_as",
    "suggested": true
   },
   {
@@ -7962,6 +7969,7 @@
    "description": "6 loans have an origination date after the as-of date.",
    "count": 6,
    "rule_id": "r_1835597c8c",
+   "rule_type": "date_not_future",
    "suggested": true
   },
   {
@@ -7974,6 +7982,7 @@
    "description": "15 loans have a first payment dated before origination.",
    "count": 15,
    "rule_id": "r_9391bf24fc",
+   "rule_type": "date_order",
    "suggested": true
   },
   {
@@ -7985,6 +7994,7 @@
    "description": "40 occupancy codes use a variant spelling (p, Primary, INV, a trailing space, X).",
    "count": 40,
    "rule_id": "r_66783dac0f",
+   "rule_type": "in_set",
    "suggested": true
   },
   {
@@ -7996,6 +8006,7 @@
    "description": "22 states are lower case or spelled out instead of the two-letter code.",
    "count": 22,
    "rule_id": "r_45225bc40f",
+   "rule_type": "in_set",
    "suggested": true
   },
   {
@@ -8008,6 +8019,7 @@
    "description": "9 loans carry a product description that belongs to a different product code.",
    "count": 9,
    "rule_id": "r_45754ffcbd",
+   "rule_type": "reference_consistency",
    "suggested": true
   },
   {
@@ -8019,6 +8031,7 @@
    "description": "14 SSNs are stored without dashes.",
    "count": 14,
    "rule_id": "r_c702e72636",
+   "rule_type": "regex",
    "suggested": true
   },
   {
@@ -8030,6 +8043,7 @@
    "description": "15 rates are on the wrong scale: 11 entered as a fraction, 4 multiplied by ten.",
    "count": 15,
    "rule_id": "r_f6e320980c",
+   "rule_type": "range",
    "suggested": true
   },
   {
@@ -8041,6 +8055,7 @@
    "description": "9 FICO scores fall outside 300-850 (0, 999, 9999).",
    "count": 9,
    "rule_id": "r_8370a47473",
+   "rule_type": "range",
    "suggested": true
   },
   {
@@ -8052,6 +8067,7 @@
    "description": "7 balances are impossible: 3 negative and 4 a hundred times too large.",
    "count": 7,
    "rule_id": "r_5b215c8379",
+   "rule_type": "range",
    "suggested": true
   },
   {
@@ -8065,6 +8081,7 @@
    "description": "19 loans have an LTV that does not equal balance / appraised value: 12 stale LTVs plus the 7 corrupted balances.",
    "count": 19,
    "rule_id": "r_9f5f8f4518",
+   "rule_type": "derived_ratio",
    "suggested": true
   }
  ]

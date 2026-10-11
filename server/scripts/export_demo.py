@@ -64,6 +64,7 @@ def build_bundle() -> dict[str, Any]:
                 "description": issue["description"],
                 "count": issue["count"],
                 "rule_id": rule_id(validate_rule(issue["rule"], dataset.columns)),
+                "rule_type": issue["rule"]["type"],
                 "suggested": rule_id(validate_rule(issue["rule"], dataset.columns)) in suggested,
             }
             for issue in manifest["issues"]

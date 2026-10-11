@@ -1,0 +1,67 @@
+@import "tailwindcss";
+
+/*
+ * Design tokens. Components only reference tokens, so a project gets its own
+ * visual identity (and dark mode) by changing the values in these two blocks.
+ */
+:root {
+  --bg: #ffffff;
+  --fg: #14161a;
+  --muted: #5c6370;
+  --surface: #f4f5f7;
+  --border: #d9dce1;
+  --accent: #1f5eff;
+  --accent-fg: #ffffff;
+  --danger: #b3261e;
+  --success: #1a7f37;
+  color-scheme: light;
+}
+
+[data-theme="dark"] {
+  --bg: #0e1013;
+  --fg: #eceef2;
+  --muted: #9aa2ae;
+  --surface: #171a1f;
+  --border: #2b3038;
+  --accent: #7aa7ff;
+  --accent-fg: #0e1013;
+  --danger: #ff8a80;
+  --success: #56d364;
+  color-scheme: dark;
+}
+
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-fg: var(--fg);
+  --color-muted: var(--muted);
+  --color-surface: var(--surface);
+  --color-border: var(--border);
+  --color-accent: var(--accent);
+  --color-accent-fg: var(--accent-fg);
+  --color-danger: var(--danger);
+  --color-success: var(--success);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

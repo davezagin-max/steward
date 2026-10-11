@@ -1,0 +1,4 @@
+[
+  { "route": "/api/example", "body": { "demoId": "powder-day", "topic": "a powder day in the Wasatch" } },
+  { "route": "/api/example", "body": { "demoId": "house-set", "topic": "the first drop in a house set" } }
+]

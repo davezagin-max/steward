@@ -147,7 +147,11 @@ class BodyLimit:
             if not over:
                 await send(message)
 
-        await self.app(scope, counted_receive, guarded_send)
+        try:
+            await self.app(scope, counted_receive, guarded_send)
+        except Exception:
+            if not over:
+                raise  # only an error caused by our own truncation is ours to swallow
         if over:
             await too_large(scope, receive, send)
 

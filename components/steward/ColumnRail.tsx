@@ -48,7 +48,8 @@ export function ColumnRail({ selection, onSelect }: { selection: Selection; onSe
     const list = listRef.current;
     const current = list?.querySelector<HTMLElement>("[aria-current]");
     if (!list || !current) return;
-    const top = current.offsetTop - list.offsetTop;
+    // The list is positioned, so offsetTop is already measured from its top edge.
+    const top = current.offsetTop;
     if (top < list.scrollTop) list.scrollTop = top - 6;
     else if (top + current.offsetHeight > list.scrollTop + list.clientHeight) {
       list.scrollTop = top + current.offsetHeight - list.clientHeight + 6;

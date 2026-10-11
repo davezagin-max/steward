@@ -645,6 +645,15 @@ def run_assessment(
         )
         return RunOutcome(run, usage, cost, column_tally.model, stopped=True)
     send({"type": "pass", "summary": column_tally.summary().model_dump()})
+    if stopped.is_set():  # the listener left on that very event: skip the costly pass
+        usage, cost = totals()
+        run = AssessmentRun(
+            assessments=ordered,
+            relationships=[],
+            failures=failures,
+            passes=[column_tally.summary()],
+        )
+        return RunOutcome(run, usage, cost, column_tally.model, stopped=True)
     proposed = {rule.id for assessment in ordered for rule in assessment.rules}
     value, _refusal, problem = _call_tool(
         client,

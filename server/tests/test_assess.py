@@ -328,6 +328,12 @@ def test_no_call_is_started_once_nobody_is_listening(profile: Profile) -> None:
     assert run_assessment(busy, profile, emit=emit_once).stopped is True  # type: ignore[arg-type]
     assert len(busy.requests) <= 2 + 4 and None not in map(requested_column, busy.requests)
 
+    # Leaving exactly as the column pass ends still skips the high-effort call.
+    late = ScriptedClient()
+    outcome = run_assessment(late, profile, emit=lambda event: event["type"] != "pass")  # type: ignore[arg-type]
+    assert outcome.stopped is True and len(late.requests) == 25
+    assert None not in map(requested_column, late.requests)
+
 
 def test_system_prompt_holds_the_masked_profile_and_treats_it_as_data(profile: Profile) -> None:
     prompt = build_system_prompt(profile)

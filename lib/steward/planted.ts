@@ -47,7 +47,7 @@ export function matchPlanted(
     const exact = rules.find((entry) => entry.item.id === `rule:${issue.rule_id}`);
     const alike = rules
       .filter((entry) => entry.rule.type === issue.rule_type && sameSet(ruleColumns(entry.rule, catalog), issue.columns))
-      .sort((a, b) => distance(a.failed, issue.count) - distance(b.failed, issue.count));
+      .sort((a, b) => compare(distance(a.failed, issue.count), distance(b.failed, issue.count)));
     const match = exact ?? alike[0] ?? null;
     return {
       issue,
@@ -56,6 +56,11 @@ export function matchPlanted(
       caught: match?.failed === issue.count,
     };
   });
+}
+
+/** Infinity minus Infinity is NaN, so compare instead of subtracting. */
+function compare(a: number, b: number): number {
+  return a === b ? 0 : a < b ? -1 : 1;
 }
 
 /** How far a rule's failure count is from the planted count; a rule that has not run sorts last. */

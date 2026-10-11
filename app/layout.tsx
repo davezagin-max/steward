@@ -8,8 +8,9 @@ const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Starter",
-  description: "Portfolio project starter.",
+  title: "Steward: AI data steward",
+  description:
+    "Profile a dataset, draft its catalog, classify sensitive fields, propose data-quality rules, and emit a data contract, with a person approving every suggestion.",
 };
 
 export const viewport: Viewport = {

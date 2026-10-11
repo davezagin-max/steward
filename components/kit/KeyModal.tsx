@@ -54,8 +54,9 @@ export function KeyModal({ open, hasKey, onClose }: KeyModalProps) {
       <form onSubmit={handleSubmit} className="flex flex-col gap-4 p-6">
         <h2 className="text-lg font-semibold">Add your Anthropic key</h2>
         <p className="text-sm text-muted">
-          Your key stays in this browser tab. It is sent with each request to this app&apos;s own
-          API route, which calls Claude and forgets it. It is never stored or logged on the server.
+          Your key stays in this browser tab. It is sent in a request header to the Steward API
+          only when you run an assessment; the API calls Claude and forgets it. It is never stored
+          or logged on the server.
         </p>
         <div className="flex flex-col gap-1.5">
           <label htmlFor={inputId} className="text-sm font-medium">

@@ -30,6 +30,9 @@ from app.rules import catalog_json, rule_id, run_rule, validate_rule
 ROOT = Path(__file__).resolve().parent.parent
 FIXTURE_PATH = ROOT / "fixtures" / "assess.json"
 BUNDLE_PATH = ROOT.parent / "fixtures" / "demo.json"
+# A frozen copy of the placeholder bundle for the frontend's unit tests, so they keep
+# passing after a real run replaces the placeholder suggestions.
+SNAPSHOT_PATH = ROOT.parent / "tests" / "steward" / "fixtures" / "placeholder-bundle.json"
 DEMO_ID = "sample-loans"
 
 
@@ -98,6 +101,11 @@ def main() -> None:
     bundle = build_bundle()
     BUNDLE_PATH.parent.mkdir(parents=True, exist_ok=True)
     BUNDLE_PATH.write_text(json.dumps(bundle, indent=1, ensure_ascii=False) + "\n")
+    if bundle["meta"]["placeholder"]:
+        SNAPSHOT_PATH.parent.mkdir(parents=True, exist_ok=True)
+        SNAPSHOT_PATH.write_text(
+            json.dumps(bundle, separators=(",", ":"), ensure_ascii=False) + "\n"
+        )
     failing = sum(1 for result in bundle["results"].values() if result["status"] == "fail")
     caught = sum(1 for issue in bundle["planted"] if issue["suggested"])
     print(

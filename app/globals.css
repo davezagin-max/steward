@@ -1,59 +1,100 @@
 @import "tailwindcss";
 
 /*
- * Design tokens. Components only reference tokens, so a project gets its own
- * visual identity (and dark mode) by changing the values in these two blocks.
+ * Design tokens: slate neutrals with a teal accent. Components only reference tokens,
+ * so dark mode is the second block and nothing else.
  */
 :root {
+  --canvas: #f2f4f7;
   --bg: #ffffff;
-  --fg: #14161a;
-  --muted: #5c6370;
-  --surface: #f4f5f7;
-  --border: #d9dce1;
-  --accent: #1f5eff;
+  --fg: #111a27;
+  --muted: #566375;
+  --surface: #f0f3f6;
+  --border: #d7dde5;
+  --border-strong: #b4bfcc;
+  --accent: #0f766e;
   --accent-fg: #ffffff;
-  --danger: #b3261e;
-  --success: #1a7f37;
+  --accent-soft: #dcf2ee;
+  --accent-ink: #0a5a53;
+  --danger: #b42318;
+  --danger-soft: #fde9e7;
+  --success: #17794c;
+  --success-soft: #dff3e7;
+  --warn: #8a5106;
+  --warn-soft: #fcefd3;
+  --info: #1f4fbf;
+  --info-soft: #e4ecfd;
+  --rose: #a1174a;
+  --rose-soft: #fce5ed;
   color-scheme: light;
 }
 
 [data-theme="dark"] {
-  --bg: #0e1013;
-  --fg: #eceef2;
-  --muted: #9aa2ae;
-  --surface: #171a1f;
-  --border: #2b3038;
-  --accent: #7aa7ff;
-  --accent-fg: #0e1013;
-  --danger: #ff8a80;
-  --success: #56d364;
+  --canvas: #0b1017;
+  --bg: #121922;
+  --fg: #e6ebf2;
+  --muted: #9aa7b9;
+  --surface: #1a2330;
+  --border: #283343;
+  --border-strong: #3c4a5d;
+  --accent: #2cb5a9;
+  --accent-fg: #03201d;
+  --accent-soft: #10312e;
+  --accent-ink: #7fded3;
+  --danger: #ff9086;
+  --danger-soft: #3a1b1a;
+  --success: #62d39c;
+  --success-soft: #12301f;
+  --warn: #f0b860;
+  --warn-soft: #33280f;
+  --info: #93b4ff;
+  --info-soft: #172646;
+  --rose: #ff8fb3;
+  --rose-soft: #3a1727;
   color-scheme: dark;
 }
 
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
 @theme inline {
+  --color-canvas: var(--canvas);
   --color-bg: var(--bg);
   --color-fg: var(--fg);
   --color-muted: var(--muted);
   --color-surface: var(--surface);
   --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
   --color-accent: var(--accent);
   --color-accent-fg: var(--accent-fg);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-ink: var(--accent-ink);
   --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
   --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+  --color-rose: var(--rose);
+  --color-rose-soft: var(--rose-soft);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
 body {
-  background: var(--bg);
+  background: var(--canvas);
   color: var(--fg);
 }
 
 :focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
+}
+
+/* Native dialogs: the audit log slides in from the right, the rest are centered. */
+dialog::backdrop {
+  background: rgb(8 12 18 / 0.55);
 }
 
 @media (prefers-reduced-motion: reduce) {

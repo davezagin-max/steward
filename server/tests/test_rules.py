@@ -14,6 +14,7 @@ from app.rules import (
     RuleError,
     catalog_json,
     compile_rule,
+    echo_safe,
     failing_rows,
     rule_columns,
     rule_id,
@@ -259,6 +260,24 @@ def test_a_bad_rule_becomes_an_error_result_and_the_rest_still_run() -> None:
     assert results[0].sql is None and results[1].rule == {"type": "invalid"}
     with pytest.raises(RuleError, match="At most"):
         run_rules(table(), [{"type": "not_null", "column": "id"}] * 301, as_of=AS_OF)
+
+
+def test_a_rejected_rule_is_echoed_back_bounded_and_json_safe() -> None:
+    # json.loads reads Infinity, NaN, and 1e400 as non-finite floats; json.dumps in strict
+    # mode refuses to write them. The rule must be rejected without breaking the response.
+    import json
+
+    raw = json.loads('{"type": "range", "column": "amount", "min": 1e400, "max": NaN}')
+    result = run_rule(table(), raw, as_of=AS_OF)
+    assert (result.status, result.error) == ("error", "'min' must be a finite number.")
+    assert result.rule == {"type": "range", "column": "amount", "min": "inf", "max": "nan"}
+    json.dumps(result.model_dump(), allow_nan=False)
+
+    huge = {"type": "in_set", "column": "nope", "values": ["v" * 5000] * 5000, "x": {"a": {"b": {"c": {"d": 1}}}}}  # fmt: skip
+    echoed = echo_safe(huge)
+    assert len(echoed["values"]) == 50 and len(echoed["values"][0]) == 300
+    assert echoed["x"] == {"a": {"b": {"c": "…"}}}
+    assert echo_safe({"when": date(2024, 1, 1)}) == {"when": "2024-01-01"}
 
 
 # ----------------------------------------------------------------- engine answers

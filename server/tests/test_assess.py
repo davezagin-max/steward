@@ -185,6 +185,34 @@ def test_a_missing_tool_call_is_retried_once_in_the_same_conversation(profile: P
     assert answered[1]["type"] == "text"
 
 
+def test_an_answer_cut_off_at_the_token_limit_is_asked_again_with_more_room(profile: Profile) -> None:  # fmt: skip
+    cut: dict[str, int] = {}
+
+    def responder(params: dict[str, Any], index: int) -> Any:
+        column = requested_column(params)
+        if column not in ("ltv", "fico_score"):
+            return None
+        cut[column] = cut.get(column, 0) + 1
+        if column == "ltv" and cut[column] > 1:
+            return None
+        partial = tool_use(COLUMN_TOOL, {"column": column}, "tu_partial")
+        return reply([partial], "max_tokens", cached=True)
+
+    client = ScriptedClient(responder)
+    outcome = run(profile, client)
+    first, second = [r for r in client.requests if requested_column(r) == "ltv"]
+    # Not a continuation of the cut-off turn: the same single request, with twice the limit.
+    assert second["messages"] == first["messages"] and len(second["messages"]) == 1
+    assert second["max_tokens"] == 2 * first["max_tokens"]
+    assert second["system"] == first["system"] and second["tools"] == first["tools"]
+    assert "ltv" in [a.column for a in outcome.run.assessments]
+    # Cut off twice: reported as a failure for that column, and the run carries on.
+    assert [(f.column, f.reason) for f in outcome.run.failures] == [
+        ("fico_score", "The answer was cut off at the token limit.")
+    ]
+    assert len(outcome.run.assessments) == 24 and outcome.run.passes[0].retries == 2
+
+
 def test_rules_the_validator_rejects_never_reach_the_engine(profile: Profile) -> None:
     raw = copy.deepcopy(CALLS["fico_score"])
     raw["rules"] = [
@@ -269,6 +297,36 @@ def test_refusals_are_results_not_exceptions(profile: Profile) -> None:
     assert [(f.column, f.reason) for f in later.run.failures] == [
         ("borrower_ssn", "Claude declined this request.")
     ]
+
+
+def test_no_call_is_started_once_nobody_is_listening(profile: Profile) -> None:
+    # The run is billed to the visitor's key. When they cancel, `emit` starts returning
+    # False and the remaining columns and the high-effort pass must not be called.
+    client = ScriptedClient()
+    events: list[dict[str, Any]] = []
+
+    def emit(event: dict[str, Any]) -> bool:
+        events.append(event)
+        return sum(e["type"] == "column" for e in events) < 3
+
+    outcome = run_assessment(client, profile, emit=emit, concurrency=1)  # type: ignore[arg-type]
+    assert outcome.stopped is True and outcome.refusal is None
+    assert [requested_column(r) for r in client.requests] == ["loan_id", "servicer_id", "servicer_loan_number"]  # fmt: skip
+    assert [a.column for a in outcome.run.assessments] == ["loan_id", "servicer_id", "servicer_loan_number"]  # fmt: skip
+    assert outcome.run.relationships == [] and [p.name for p in outcome.run.passes] == ["columns"]
+    # What was spent before the stop is still reported.
+    assert outcome.run.passes[0].calls == 3 and outcome.usage.output_tokens == 900
+
+    # With four calls in flight the stop is not instant, but it is nowhere near a full run.
+    busy = ScriptedClient()
+    seen: list[str] = []
+
+    def emit_once(event: dict[str, Any]) -> bool:
+        seen.append(event["type"])
+        return seen.count("column") < 2
+
+    assert run_assessment(busy, profile, emit=emit_once).stopped is True  # type: ignore[arg-type]
+    assert len(busy.requests) <= 2 + 4 and None not in map(requested_column, busy.requests)
 
 
 def test_system_prompt_holds_the_masked_profile_and_treats_it_as_data(profile: Profile) -> None:

@@ -178,7 +178,7 @@ def rules_run(body: RunRulesBody) -> JSONResponse:
 
 @app.post("/api/assess", dependencies=[Depends(assess_rate_limit)])
 def assess(body: AssessBody, client: anthropic.Anthropic | None = Depends(get_client)) -> Response:
-    def live(client: anthropic.Anthropic, emit: Callable[[Any], None]) -> Live:
+    def live(client: anthropic.Anthropic, emit: Callable[[Any], bool]) -> Live:
         if body.profile is not None:
             target = body.profile
         else:

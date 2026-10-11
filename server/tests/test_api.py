@@ -165,6 +165,15 @@ def test_rules_run_on_the_sample_including_an_edited_and_an_invalid_rule() -> No
     assert later.json()["data"]["results"][0]["failed"] == 0
 
 
+def test_a_rule_with_a_non_finite_number_is_an_error_result_not_a_500() -> None:
+    body = '{"dataset": "sample", "rules": [{"type": "range", "column": "fico_score", "min": Infinity, "max": null}]}'  # fmt: skip
+    res = client.post("/api/rules/run", content=body, headers={"content-type": "application/json"})
+    assert res.status_code == 200
+    (result,) = res.json()["data"]["results"]
+    assert (result["status"], result["error"]) == ("error", "'min' must be a finite number.")
+    assert result["rule"]["min"] == "inf"
+
+
 def test_rules_run_on_an_uploaded_csv() -> None:
     res = client.post(
         "/api/rules/run",
@@ -300,6 +309,69 @@ def test_request_key_prefers_a_safe_demo_id() -> None:
     unsafe = demo.request_key({"demoId": "../../etc/passwd"})
     assert unsafe != "../../etc/passwd" and len(unsafe) == 16
     assert demo.request_key({"a": 1, "b": 2}) == demo.request_key({"b": 2, "a": 1})
+
+
+def test_a_chunked_body_over_the_limit_is_cut_off_and_answered_with_a_cors_visible_413() -> None:
+    sent = 0
+
+    def chunks() -> Iterator[bytes]:
+        # No Content-Length: the size is only known as the bytes arrive.
+        nonlocal sent
+        yield b'{"csv":"'
+        for _ in range(4000):
+            sent += 1
+            yield b"a" * 4096
+        yield b'"}'
+
+    res = client.post(
+        "/api/profile",
+        content=chunks(),
+        headers={"content-type": "application/json", "origin": "http://localhost:3130"},
+    )
+    assert res.status_code == 413
+    assert res.json() == {"ok": False, "error": {"kind": "too_large", "message": "Request body is too large."}}  # fmt: skip
+    assert res.headers["access-control-allow-origin"] == "http://localhost:3130"
+    assert sent == 4000  # the test client sends it all; the server stopped keeping it
+    # A small endpoint keeps its small cap, and a normal upload still works.
+    assert client.post("/api/assess", content=b"x" * 600_000).status_code == 413
+    assert client.post("/api/profile", json={"csv": "id\n1\n2\n"}).status_code == 200
+
+
+def test_closing_the_stream_tells_the_live_work_to_stop_and_records_nothing(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Any
+) -> None:
+    import asyncio
+    import time
+
+    monkeypatch.setenv("RECORD_FIXTURES", "1")
+    monkeypatch.setattr(demo, "FIXTURE_DIR", tmp_path)
+    answers: list[bool] = []
+
+    def live(_: Any, emit: Any) -> Live:
+        for step in range(500):
+            answers.append(emit({"step": step}))
+            if not answers[-1]:
+                break
+            time.sleep(0.005)
+        return Live(data={"steps": len(answers)})
+
+    response = respond_stream("x", {"demoId": "p"}, object(), live)  # type: ignore[arg-type]
+
+    async def read_two_frames_then_leave(body: Any) -> list[str]:
+        got = [await body.__anext__(), await body.__anext__()]
+        await body.aclose()
+        return got
+
+    read = asyncio.run(read_two_frames_then_leave(response.body_iterator))  # type: ignore[union-attr]
+    meta, first = frames("".join(read))
+    assert meta["type"] == "meta" and first["event"] == {"step": 0}
+    deadline = time.monotonic() + 5
+    while (not answers or answers[-1]) and time.monotonic() < deadline:
+        time.sleep(0.01)
+    assert answers[-1] is False and len(answers) < 500
+    time.sleep(0.05)
+    assert not (tmp_path / "x.json").exists()
+    demo.load_store.cache_clear()
 
 
 def test_stream_replays_recorded_events_in_order(monkeypatch: pytest.MonkeyPatch) -> None:

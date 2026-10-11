@@ -42,6 +42,11 @@ MAX_UNIQUE_COLUMNS = 4
 MAX_RULES_PER_RUN = 300
 SAMPLE_LIMIT = 5
 SAMPLE_VALUE_CHARS = 120
+# Bounds on a rejected rule when it is shown back to the reviewer.
+ECHO_TEXT = 300
+ECHO_KEY = 40
+ECHO_ITEMS = 50
+ECHO_DEPTH = 4
 
 FieldKind = Literal[
     "column", "columns", "number", "optional_number", "text", "text_list", "boolean", "choice"
@@ -564,8 +569,33 @@ class RuleResult(BaseModel):
     error: str | None = None
 
 
+def echo_safe(value: Any, depth: int = 0) -> Any:
+    """A bounded, JSON-safe copy of something that failed validation, for showing it back.
+
+    A rejected rule can hold anything, including `Infinity` or `NaN` (Python's JSON parser
+    accepts both, and reads `1e400` as infinity). Those are not valid JSON on the way out,
+    so they are returned as text; long strings, long lists, and deep nesting are cut.
+    """
+    if value is None or isinstance(value, bool | int):
+        return value
+    if isinstance(value, float):
+        return value if math.isfinite(value) else str(value)
+    if isinstance(value, str):
+        return value if len(value) <= ECHO_TEXT else value[: ECHO_TEXT - 1] + "…"
+    if depth >= ECHO_DEPTH:
+        return "…"
+    if isinstance(value, dict):
+        return {
+            str(key)[:ECHO_KEY]: echo_safe(item, depth + 1)
+            for key, item in list(value.items())[:ECHO_ITEMS]
+        }
+    if isinstance(value, list | tuple):
+        return [echo_safe(item, depth + 1) for item in value[:ECHO_ITEMS]]
+    return str(value)[:ECHO_TEXT]
+
+
 def _error_result(raw: Any, message: str) -> RuleResult:
-    shown = raw if isinstance(raw, dict) else {"type": "invalid"}
+    shown = echo_safe(raw) if isinstance(raw, dict) else {"type": "invalid"}
     digest = hashlib.sha1(repr(raw).encode(), usedforsecurity=False).hexdigest()[:10]
     return RuleResult(rule_id=f"r_{digest}", rule=shown, status="error", error=message)
 

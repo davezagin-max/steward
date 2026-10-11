@@ -534,7 +534,11 @@ def build() -> Sample:
             "kind": "format",
             "columns": ["borrower_ssn"],
             "description": "14 SSNs are stored without dashes.",
-            "rule": {"type": "regex", "column": "borrower_ssn", "pattern": r"\d{3}-\d{2}-\d{4}"},
+            "rule": {
+                "type": "regex",
+                "column": "borrower_ssn",
+                "pattern": "[0-9]{3}-[0-9]{2}-[0-9]{4}",
+            },
             "rows": rows("ssn_format"),
         },
         {

@@ -668,7 +668,7 @@
    "rule": {
     "type": "regex",
     "column": "borrower_ssn",
-    "pattern": "\\d{3}-\\d{2}-\\d{4}"
+    "pattern": "[0-9]{3}-[0-9]{2}-[0-9]{4}"
    },
    "rows": [
     109,

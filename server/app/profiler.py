@@ -279,7 +279,7 @@ def _finite(value: Any) -> float | None:
     if value is None:
         return None
     number = float(value)
-    return number if math.isfinite(number) else None
+    return round(number, 6) if math.isfinite(number) else None
 
 
 def sensitive_hint(name: str, patterns: list[NamedPattern]) -> list[str]:
@@ -454,7 +454,7 @@ def _profile_column(
             f"count(*) FILTER (WHERE x = 0), count(*) FILTER (WHERE x < 0) "
             f"FROM (SELECT {num} AS x FROM {TABLE}) WHERE x IS NOT NULL",
         )
-        p25, median, p75 = (float(v) for v in quartiles)
+        p25, median, p75 = (round(float(v), 6) for v in quartiles)
         numeric = NumericStats(
             min=float(lo),
             max=float(hi),

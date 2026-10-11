@@ -1,0 +1,2303 @@
+{
+ "sample-loans": {
+  "label": "sample-loans",
+  "placeholder": true,
+  "recordedAt": null,
+  "model": "claude-opus-5-5",
+  "usage": {
+   "input_tokens": 0,
+   "output_tokens": 0,
+   "cache_creation_input_tokens": 0,
+   "cache_read_input_tokens": 0
+  },
+  "costUsd": 0,
+  "data": {
+   "assessments": [
+    {
+     "column": "loan_id",
+     "business_definition": "Identifier the lender assigns to a loan. Each row of this table is meant to describe one loan.",
+     "sensitivity": "Internal",
+     "confidence": "high",
+     "rationale": "Every value has the shape AA99999999 and 5,000 of 5,014 rows are distinct; the profile lists it as a key candidate with 14 duplicated values. An internal reference number carries no personal information on its own.",
+     "rules": [
+      {
+       "id": "r_27795682e8",
+       "rule": {
+        "type": "not_null",
+        "column": "loan_id"
+       },
+       "severity": "error",
+       "reason": "No nulls today, and a loan cannot be tracked without its identifier."
+      },
+      {
+       "id": "r_46427a9996",
+       "rule": {
+        "type": "unique",
+        "columns": [
+         "loan_id"
+        ]
+       },
+       "severity": "error",
+       "reason": "99.72% unique with 14 duplicated values: the duplicates are the finding."
+      },
+      {
+       "id": "r_8986e67043",
+       "rule": {
+        "type": "regex",
+        "column": "loan_id",
+        "pattern": "[A-Z]{2}[0-9]{8}"
+       },
+       "severity": "warning",
+       "reason": "All values match the profiled shape."
+      }
+     ],
+     "rejected_rules": []
+    },
+    {
+     "column": "servicer_id",
+     "business_definition": "Code for the company that services the loan: it collects payments and manages escrow on the lender's behalf.",
+     "sensitivity": "Internal",
+     "confidence": "high",
+     "rationale": "Eight codes, SV01 to SV08, with no nulls and one shape. A counterparty code is business data, not personal data.",
+     "rules": [
+      {
+       "id": "r_c8bd02e702",
+       "rule": {
+        "type": "not_null",
+        "column": "servicer_id"
+       },
+       "severity": "error",
+       "reason": "Populated on every row."
+      },
+      {
+       "id": "r_d287d9f583",
+       "rule": {
+        "type": "in_set",
+        "column": "servicer_id",
+        "values": [
+         "SV01",
+         "SV02",
+         "SV03",
+         "SV04",
+         "SV05",
+         "SV06",
+         "SV07",
+         "SV08"
+        ]
+       },
+       "severity": "error",
+       "reason": "The profile lists exactly eight codes."
+      }
+     ],
+     "rejected_rules": []
+    },
+    {
+     "column": "servicer_loan_number",
+     "business_definition": "The servicer's own number for the loan. It identifies a loan within one servicer, not across servicers.",
+     "sensitivity": "Internal",
+     "confidence": "medium",
+     "rationale": "Six-digit integers with 2,016 distinct values across 5,014 rows, so numbers repeat between servicers; the profile pairs it with servicer_id as a composite key. Confirm with the servicing team that numbering is per servicer.",
+     "rules": [
+      {
+       "id": "r_16708ba997",
+       "rule": {
+        "type": "not_null",
+        "column": "servicer_loan_number"
+       },
+       "severity": "error",
+       "reason": "Populated on every row."
+      },
+      {
+       "id": "r_65e4f8973d",
+       "rule": {
+        "type": "parses_as",
+        "column": "servicer_loan_number",
+        "as_type": "integer"
+       },
+       "severity": "warning",
+       "reason": "All values parse as integers today."
+      }
+     ],
+     "rejected_rules": []
+    },
+    {
+     "column": "borrower_first_name",
+     "business_definition": "Given name of the primary borrower on the loan.",
+     "sensitivity": "Confidential",
+     "confidence": "high",
+     "rationale": "The column name and capitalized-word shapes point to a person's first name; values were masked in the profile. A name identifies an individual when combined with the other borrower fields.",
+     "rules": [
+      {
+       "id": "r_fd2840407c",
+       "rule": {
+        "type": "not_null",
+        "column": "borrower_first_name"
+       },
+       "severity": "error",
+       "reason": "No nulls today; a borrower record needs a name."
+      }
+     ],
+     "rejected_rules": []
+    },
+    {
+     "column": "borrower_last_name",
+     "business_definition": "Family name of the primary borrower on the loan.",
+     "sensitivity": "Confidential",
+     "confidence": "high",
+     "rationale": "Same evidence as the first name: a person-name column with capitalized-word shapes, masked in the profile.",
+     "rules": [
+      {
+       "id": "r_cb1ae8fad0",
+       "rule": {
+        "type": "not_null",
+        "column": "borrower_last_name"
+       },
+       "severity": "error",
+       "reason": "No nulls today; a borrower record needs a name."
+      }
+     ],
+     "rejected_rules": []
+    },
+    {
+     "column": "borrower_ssn",
+     "business_definition": "Social Security number of the primary borrower, used to verify identity and pull credit.",
+     "sensitivity": "Restricted",
+     "confidence": "high",
+     "rationale": "The name says SSN and 99.72% of values have the dashed shape 999-99-9999. A government identifier is the highest class and should be masked by default.",
+     "rules": [
+      {
+       "id": "r_d196bc228a",
+       "rule": {
+        "type": "not_null",
+        "column": "borrower_ssn"
+       },
+       "severity": "error",
+       "reason": "No nulls today."
+      },
+      {
+       "id": "r_c702e72636",
+       "rule": {
+        "type": "regex",
+        "column": "borrower_ssn",
+        "pattern": "[0-9]{3}-[0-9]{2}-[0-9]{4}"
+       },
+       "severity": "error",
+       "reason": "0.28% of values are nine digits with no dashes; one storage format prevents failed joins."
+      }
+     ],
+     "rejected_rules": []
+    },
+    {
+     "column": "borrower_dob",
+     "business_definition": "Date of birth of the primary borrower.",
+     "sensitivity": "Restricted",
+     "confidence": "high",
+     "rationale": "A date column named dob with every value parsing as a date. Date of birth is a direct identifier and, with a name, is enough to impersonate someone.",
+     "rules": [
+      {
+       "id": "r_a25a8d019b",
+       "rule": {
+        "type": "not_null",
+        "column": "borrower_dob"
+       },
+       "severity": "error",
+       "reason": "No nulls today."
+      },
+      {
+       "id": "r_ea8b995641",
+       "rule": {
+        "type": "parses_as",
+        "column": "borrower_dob",
+        "as_type": "date"
+       },
+       "severity": "error",
+       "reason": "100% of values parse as ISO dates."
+      },
+      {
+       "id": "r_56a519ddc1",
+       "rule": {
+        "type": "date_not_future",
+        "column": "borrower_dob"
+       },
+       "severity": "error",
+       "reason": "A birth date cannot be after the as-of date; none are today."
+      }
+     ],
+     "rejected_rules": []
+    },
+    {
+     "column": "borrower_email",
+     "business_definition": "Email address used to contact the borrower. Optional.",
+     "sensitivity": "Confidential",
+     "confidence": "high",
+     "rationale": "All non-null values match an email pattern and 12.17% of rows are empty, which fits an optional contact field, so no required rule is proposed.",
+     "rules": [
+      {
+       "id": "r_783f9781c6",
+       "rule": {
+        "type": "regex",
+        "column": "borrower_email",
+        "pattern": "[^@\\s]+@[^@\\s]+\\.[a-z]{2,}"
+       },
+       "severity": "warning",
+       "reason": "Every non-null value already has this shape."
+      }
+     ],
+     "rejected_rules": [
+      {
+       "rule": {
+        "type": "regex",
+        "column": "borrower_email",
+        "pattern": "(?!.*\\.\\.)[^@\\s]+@[^@\\s]+"
+       },
+       "reason": "'pattern' is not a valid RE2 regular expression (invalid perl operator: (?!)."
+      }
+     ]
+    },
+    {
+     "column": "property_address",
+     "business_definition": "Street address of the property that secures the loan.",
+     "sensitivity": "Confidential",
+     "confidence": "high",
+     "rationale": "A free-text address column with 33 distinct shapes, masked in the profile. A home address locates an identifiable person.",
+     "rules": [
+      {
+       "id": "r_54701177d5",
+       "rule": {
+        "type": "not_null",
+        "column": "property_address"
+       },
+       "severity": "error",
+       "reason": "No nulls today; the collateral must be locatable."
+      }
+     ],
+     "rejected_rules": []
+    },
+    {
+     "column": "property_city",
+     "business_definition": "City where the mortgaged property is located.",
+     "sensitivity": "Internal",
+     "confidence": "high",
+     "rationale": "69 city names with no nulls; the profile shows that property_zip determines it without exception. A city alone does not identify a person.",
+     "rules": [
+      {
+       "id": "r_4eacea63c5",
+       "rule": {
+        "type": "not_null",
+        "column": "property_city"
+       },
+       "severity": "error",
+       "reason": "Populated on every row."
+      }
+     ],
+     "rejected_rules": []
+    },
+    {
+     "column": "property_state",
+     "business_definition": "Two-letter USPS code of the state where the mortgaged property is located.",
+     "sensitivity": "Internal",
+     "confidence": "high",
+     "rationale": "99.56% of values are two capital letters across 14 states. The rest are lower-case codes and spelled-out names such as 'New Mexico', which will split any group-by on state.",
+     "rules": [
+      {
+       "id": "r_e99df8900e",
+       "rule": {
+        "type": "not_null",
+        "column": "property_state"
+       },
+       "severity": "error",
+       "reason": "Populated on every row."
+      },
+      {
+       "id": "r_45225bc40f",
+       "rule": {
+        "type": "in_set",
+        "column": "property_state",
+        "values": [
+         "UT",
+         "CA",
+         "AZ",
+         "CO",
+         "TX",
+         "ID",
+         "NV",
+         "WA",
+         "OR",
+         "NM",
+         "MT",
+         "WY",
+         "MA",
+         "NJ"
+        ]
+       },
+       "severity": "error",
+       "reason": "Only the 14 upper-case codes are valid; lower-case and spelled-out variants fail."
+      }
+     ],
+     "rejected_rules": []
+    },
+    {
+     "column": "property_zip",
+     "business_definition": "Five-digit ZIP code of the mortgaged property.",
+     "sensitivity": "Internal",
+     "confidence": "high",
+     "rationale": "Every non-null value is five digits and the column is kept as text because some codes start with zero. 1.2% of rows are empty.",
+     "rules": [
+      {
+       "id": "r_48d51c5404",
+       "rule": {
+        "type": "not_null",
+        "column": "property_zip"
+       },
+       "severity": "warning",
+       "reason": "1.2% of rows have no ZIP; geography-based pricing and reporting need it."
+      },
+      {
+       "id": "r_c5ca29c731",
+       "rule": {
+        "type": "regex",
+        "column": "property_zip",
+        "pattern": "[0-9]{5}"
+       },
+       "severity": "error",
+       "reason": "All non-null values match the five-digit shape."
+      }
+     ],
+     "rejected_rules": []
+    },
+    {
+     "column": "occupancy_code",
+     "business_definition": "How the borrower will use the property: P for primary residence, S for second home, I for investment property.",
+     "sensitivity": "Internal",
+     "confidence": "high",
+     "rationale": "P, I, and S cover 4,974 rows. Five other spellings appear on 40 rows (p, Primary, INV, 'S ' with a trailing space, and X); occupancy drives pricing, so the variants matter.",
+     "rules": [
+      {
+       "id": "r_21e48dc8f4",
+       "rule": {
+        "type": "not_null",
+        "column": "occupancy_code"
+       },
+       "severity": "error",
+       "reason": "Populated on every row."
+      },
+      {
+       "id": "r_66783dac0f",
+       "rule": {
+        "type": "in_set",
+        "column": "occupancy_code",
+        "values": [
+         "P",
+         "S",
+         "I"
+        ]
+       },
+       "severity": "error",
+       "reason": "Three valid codes; the 40 variant spellings should fail until they are mapped."
+      }
+     ],
+     "rejected_rules": []
+    },
+    {
+     "column": "loan_purpose_code",
+     "business_definition": "Why the loan was made: P for purchase, R for rate-and-term refinance, C for cash-out refinance.",
+     "sensitivity": "Internal",
+     "confidence": "low",
+     "rationale": "Three single-letter codes with no description column. The meanings are inferred from mortgage convention and the 55/27/18 split, so confirm them with the data owner before approving the definition.",
+     "rules": [
+      {
+       "id": "r_2c7e60019c",
+       "rule": {
+        "type": "not_null",
+        "column": "loan_purpose_code"
+       },
+       "severity": "error",
+       "reason": "Populated on every row."
+      },
+      {
+       "id": "r_1476b875b5",
+       "rule": {
+        "type": "in_set",
+        "column": "loan_purpose_code",
+        "values": [
+         "P",
+         "R",
+         "C"
+        ]
+       },
+       "severity": "error",
+       "reason": "The profile lists exactly three codes."
+      }
+     ],
+     "rejected_rules": []
+    },
+    {
+     "column": "product_code",
+     "business_definition": "Internal code for the mortgage product: fixed-rate terms (FRM30, FRM20, FRM15) and adjustable-rate products (ARM51, ARM71).",
+     "sensitivity": "Internal",
+     "confidence": "high",
+     "rationale": "Five codes sharing one shape, each paired with a readable name in product_description.",
+     "rules": [
+      {
+       "id": "r_2f21678a5f",
+       "rule": {
+        "type": "not_null",
+        "column": "product_code"
+       },
+       "severity": "error",
+       "reason": "Populated on every row."
+      },
+      {
+       "id": "r_36e6c4d7e7",
+       "rule": {
+        "type": "in_set",
+        "column": "product_code",
+        "values": [
+         "FRM30",
+         "FRM20",
+         "FRM15",
+         "ARM51",
+         "ARM71"
+        ]
+       },
+       "severity": "error",
+       "reason": "The profile lists exactly five codes."
+      }
+     ],
+     "rejected_rules": []
+    },
+    {
+     "column": "product_description",
+     "business_definition": "Customer-facing name of the mortgage product, such as '30-Year Fixed' or '5/1 ARM'.",
+     "sensitivity": "Public",
+     "confidence": "high",
+     "rationale": "Five product names that a lender prints on rate sheets. It is reference data with nothing specific to a borrower.",
+     "rules": [
+      {
+       "id": "r_f89fe5d93b",
+       "rule": {
+        "type": "not_null",
+        "column": "product_description"
+       },
+       "severity": "error",
+       "reason": "Populated on every row."
+      },
+      {
+       "id": "r_8c57d3e7b4",
+       "rule": {
+        "type": "in_set",
+        "column": "product_description",
+        "values": [
+         "30-Year Fixed",
+         "20-Year Fixed",
+         "15-Year Fixed",
+         "5/1 ARM",
+         "7/1 ARM"
+        ]
+       },
+       "severity": "error",
+       "reason": "The profile lists exactly five names."
+      }
+     ],
+     "rejected_rules": []
+    },
+    {
+     "column": "origination_date",
+     "business_definition": "Date the loan closed and the funds were disbursed.",
+     "sensitivity": "Internal",
+     "confidence": "high",
+     "rationale": "A date column running from 2018-01-02, but its maximum is 2033-05-10 and 6 values fall after the as-of date. 0.14% of rows are empty.",
+     "rules": [
+      {
+       "id": "r_cb6aabfc6b",
+       "rule": {
+        "type": "not_null",
+        "column": "origination_date"
+       },
+       "severity": "error",
+       "reason": "0.14% of rows have no origination date; loan age and seasoning cannot be computed without it."
+      },
+      {
+       "id": "r_8193beabc9",
+       "rule": {
+        "type": "parses_as",
+        "column": "origination_date",
+        "as_type": "date"
+       },
+       "severity": "error",
+       "reason": "All non-null values parse as ISO dates today."
+      },
+      {
+       "id": "r_1835597c8c",
+       "rule": {
+        "type": "date_not_future",
+        "column": "origination_date"
+       },
+       "severity": "error",
+       "reason": "6 values are after the as-of date; a loan cannot originate in the future."
+      }
+     ],
+     "rejected_rules": []
+    },
+    {
+     "column": "first_payment_date",
+     "business_definition": "Due date of the borrower's first scheduled payment, normally the first of the month one to two months after origination.",
+     "sensitivity": "Internal",
+     "confidence": "high",
+     "rationale": "99.64% of values parse as dates. The 18 that do not include 7 written with slashes, 4 with no separators, and 7 that look like dates but are not real calendar days. Dates after the as-of date are expected here, so no future check is proposed.",
+     "rules": [
+      {
+       "id": "r_f4beb7375f",
+       "rule": {
+        "type": "not_null",
+        "column": "first_payment_date"
+       },
+       "severity": "error",
+       "reason": "Populated on every row."
+      },
+      {
+       "id": "r_36ee51e8ea",
+       "rule": {
+        "type": "parses_as",
+        "column": "first_payment_date",
+        "as_type": "date"
+       },
+       "severity": "error",
+       "reason": "18 values are not valid ISO dates."
+      }
+     ],
+     "rejected_rules": []
+    },
+    {
+     "column": "original_upb",
+     "business_definition": "Unpaid principal balance at origination, in whole dollars: the original loan amount.",
+     "sensitivity": "Confidential",
+     "confidence": "high",
+     "rationale": "Median 335,600 with quartiles from 246,425 to 450,900, but the minimum is -255,500 (3 negative values) and the maximum is 25,910,000. A loan amount tied to a named borrower is nonpublic personal financial information.",
+     "rules": [
+      {
+       "id": "r_7d1e0f3a1d",
+       "rule": {
+        "type": "not_null",
+        "column": "original_upb"
+       },
+       "severity": "error",
+       "reason": "Populated on every row."
+      },
+      {
+       "id": "r_019d08c665",
+       "rule": {
+        "type": "parses_as",
+        "column": "original_upb",
+        "as_type": "integer"
+       },
+       "severity": "warning",
+       "reason": "All values parse as integers today."
+      },
+      {
+       "id": "r_5b215c8379",
+       "rule": {
+        "type": "range",
+        "column": "original_upb",
+        "min": 1,
+        "max": 5000000
+       },
+       "severity": "error",
+       "reason": "A balance must be positive, and the four largest outliers are 12 to 26 million against a 75th percentile of 450,900. The 5,000,000 ceiling is a judgment call to review."
+      }
+     ],
+     "rejected_rules": []
+    },
+    {
+     "column": "appraised_value",
+     "business_definition": "Appraised value of the property at origination, in whole dollars.",
+     "sensitivity": "Confidential",
+     "confidence": "medium",
+     "rationale": "Integers from 100,000 to 2,774,000 with a median of 425,000 and no negatives. The name suggests an appraisal, but it could also be the lower of appraisal and purchase price; confirm which.",
+     "rules": [
+      {
+       "id": "r_0a1de14d83",
+       "rule": {
+        "type": "not_null",
+        "column": "appraised_value"
+       },
+       "severity": "error",
+       "reason": "Populated on every row."
+      },
+      {
+       "id": "r_fc6d8f598e",
+       "rule": {
+        "type": "range",
+        "column": "appraised_value",
+        "min": 1,
+        "max": null
+       },
+       "severity": "error",
+       "reason": "A property value must be positive. No upper bound is proposed because high-value homes are legitimate."
+      }
+     ],
+     "rejected_rules": []
+    },
+    {
+     "column": "ltv",
+     "business_definition": "Loan-to-value ratio at origination, as a percentage: the original loan amount divided by the property value.",
+     "sensitivity": "Confidential",
+     "confidence": "high",
+     "rationale": "Decimals with a median of 79.44 and quartiles from 76.59 to 87.32, which is the usual clustering around 80%. The range runs from 35.00 to 114.48.",
+     "rules": [
+      {
+       "id": "r_7a5b187bcf",
+       "rule": {
+        "type": "not_null",
+        "column": "ltv"
+       },
+       "severity": "error",
+       "reason": "Populated on every row."
+      },
+      {
+       "id": "r_05b99c82be",
+       "rule": {
+        "type": "range",
+        "column": "ltv",
+        "min": 1,
+        "max": 105
+       },
+       "severity": "warning",
+       "reason": "Purchase and refinance programs rarely exceed 105% LTV; the maximum today is 114.48."
+      }
+     ],
+     "rejected_rules": []
+    },
+    {
+     "column": "interest_rate",
+     "business_definition": "Note rate of the loan at origination, in percent per year.",
+     "sensitivity": "Confidential",
+     "confidence": "high",
+     "rationale": "Quartiles run from 3.375 to 6.375, but the minimum is 0.03625 and 4 values sit above the upper fence at 33.75 to 63.75. Both look like scale errors: rates stored as fractions, and rates multiplied by ten.",
+     "rules": [
+      {
+       "id": "r_18a97fee3f",
+       "rule": {
+        "type": "not_null",
+        "column": "interest_rate"
+       },
+       "severity": "error",
+       "reason": "Populated on every row."
+      },
+      {
+       "id": "r_f6e320980c",
+       "rule": {
+        "type": "range",
+        "column": "interest_rate",
+        "min": 1,
+        "max": 15
+       },
+       "severity": "error",
+       "reason": "Mortgage note rates fall well inside 1 to 15 percent; values outside are on the wrong scale."
+      }
+     ],
+     "rejected_rules": []
+    },
+    {
+     "column": "fico_score",
+     "business_definition": "The borrower's FICO credit score at origination.",
+     "sensitivity": "Confidential",
+     "confidence": "high",
+     "rationale": "Quartiles run from 704 to 770, inside the 300 to 850 range FICO defines, but 9 values sit outside the fences, including 4 zeros and a maximum of 9999. A credit score is consumer report information.",
+     "rules": [
+      {
+       "id": "r_582d8a3833",
+       "rule": {
+        "type": "not_null",
+        "column": "fico_score"
+       },
+       "severity": "warning",
+       "reason": "2.99% of rows have no score. Some programs allow that, so monitor rather than block."
+      },
+      {
+       "id": "r_64ad2c84a7",
+       "rule": {
+        "type": "parses_as",
+        "column": "fico_score",
+        "as_type": "integer"
+       },
+       "severity": "warning",
+       "reason": "All non-null values parse as integers today."
+      },
+      {
+       "id": "r_8370a47473",
+       "rule": {
+        "type": "range",
+        "column": "fico_score",
+        "min": 300,
+        "max": 850
+       },
+       "severity": "error",
+       "reason": "FICO scores are defined from 300 to 850; zeros and 999-style values are placeholders, not scores."
+      }
+     ],
+     "rejected_rules": []
+    },
+    {
+     "column": "mi_type_code",
+     "business_definition": "Whether the loan carries mortgage insurance and who pays for it: BPMI is borrower-paid, LPMI is lender-paid, NONE means no insurance.",
+     "sensitivity": "Internal",
+     "confidence": "high",
+     "rationale": "Three codes with no nulls: NONE on 2,719 rows, BPMI on 1,955, and LPMI on 340.",
+     "rules": [
+      {
+       "id": "r_00735ff30a",
+       "rule": {
+        "type": "not_null",
+        "column": "mi_type_code"
+       },
+       "severity": "error",
+       "reason": "Populated on every row."
+      },
+      {
+       "id": "r_53c54da5db",
+       "rule": {
+        "type": "in_set",
+        "column": "mi_type_code",
+        "values": [
+         "NONE",
+         "BPMI",
+         "LPMI"
+        ]
+       },
+       "severity": "error",
+       "reason": "The profile lists exactly three codes."
+      }
+     ],
+     "rejected_rules": []
+    },
+    {
+     "column": "mi_coverage_pct",
+     "business_definition": "Share of the loan balance the mortgage insurer covers if the loan defaults, as a percentage. Empty when the loan has no mortgage insurance.",
+     "sensitivity": "Internal",
+     "confidence": "medium",
+     "rationale": "Only four values appear (12, 25, 30, and 35) and 54.69% of rows are empty, which is close to the share of loans coded NONE. Whether empty is correct depends on mi_type_code, so that check belongs to the cross-column pass.",
+     "rules": [
+      {
+       "id": "r_4dbfb74cc4",
+       "rule": {
+        "type": "in_set",
+        "column": "mi_coverage_pct",
+        "values": [
+         "12",
+         "25",
+         "30",
+         "35"
+        ]
+       },
+       "severity": "warning",
+       "reason": "Standard coverage tiers; a value outside them is probably a keying error."
+      }
+     ],
+     "rejected_rules": []
+    }
+   ],
+   "relationships": [
+    {
+     "id": "rel_1b571475",
+     "kind": "candidate_key",
+     "columns": [
+      "loan_id"
+     ],
+     "description": "loan_id is the primary key of the table: one row per loan.",
+     "confidence": "high",
+     "rationale": "It is 99.72% unique with 14 duplicated values, and the dataset has 8 fully identical rows, so the duplicates are load errors rather than a wider grain. borrower_ssn is also nearly unique, but one borrower can hold several loans, so it is not a key.",
+     "rules": [],
+     "rejected_rules": []
+    },
+    {
+     "id": "rel_d8c50929",
+     "kind": "composite_key",
+     "columns": [
+      "servicer_id",
+      "servicer_loan_number"
+     ],
+     "description": "A servicer and its loan number together identify one loan. This is the alternate key to use when matching against servicer files.",
+     "confidence": "high",
+     "rationale": "The pair is 99.72% unique. If the two columns were unrelated, about 779 colliding rows would be expected; only 14 are observed, the same count as the loan_id duplicates.",
+     "rules": [
+      {
+       "id": "r_a40c1a69e3",
+       "rule": {
+        "type": "unique",
+        "columns": [
+         "servicer_id",
+         "servicer_loan_number"
+        ]
+       },
+       "severity": "error",
+       "reason": "Enforces the alternate key; the 14 duplicate rows fail it."
+      }
+     ],
+     "rejected_rules": []
+    },
+    {
+     "id": "rel_71f1ee6b",
+     "kind": "date_ordering",
+     "columns": [
+      "origination_date",
+      "first_payment_date"
+     ],
+     "description": "A loan's first payment falls after its origination date.",
+     "confidence": "high",
+     "rationale": "The ordering holds on 99.70% of the 4,989 rows where both dates parse; 15 rows have a first payment dated before origination.",
+     "rules": [
+      {
+       "id": "r_9391bf24fc",
+       "rule": {
+        "type": "date_order",
+        "before_column": "origination_date",
+        "after_column": "first_payment_date",
+        "allow_equal": false
+       },
+       "severity": "error",
+       "reason": "A payment cannot be due before the loan exists."
+      }
+     ],
+     "rejected_rules": []
+    },
+    {
+     "id": "rel_34428c9f",
+     "kind": "date_ordering",
+     "columns": [
+      "borrower_dob",
+      "origination_date"
+     ],
+     "description": "A borrower is born before the loan originates.",
+     "confidence": "high",
+     "rationale": "The ordering holds on all 5,007 rows where both dates are present. It costs nothing to keep as a guard against swapped date fields.",
+     "rules": [
+      {
+       "id": "r_7a58b5dd3d",
+       "rule": {
+        "type": "date_order",
+        "before_column": "borrower_dob",
+        "after_column": "origination_date",
+        "allow_equal": false
+       },
+       "severity": "warning",
+       "reason": "Holds on every row today."
+      }
+     ],
+     "rejected_rules": []
+    },
+    {
+     "id": "rel_e9aaefb9",
+     "kind": "code_description_pair",
+     "columns": [
+      "product_code",
+      "product_description"
+     ],
+     "description": "product_description is the readable name of product_code: each code has exactly one description.",
+     "confidence": "high",
+     "rationale": "The mapping holds on 99.82% of rows in both directions; 9 rows carry a description that belongs to a different code.",
+     "rules": [
+      {
+       "id": "r_45754ffcbd",
+       "rule": {
+        "type": "reference_consistency",
+        "key_column": "product_code",
+        "dependent_column": "product_description"
+       },
+       "severity": "error",
+       "reason": "A code must always carry the same description; 9 rows disagree with the majority mapping."
+      }
+     ],
+     "rejected_rules": []
+    },
+    {
+     "id": "rel_ef0d7dad",
+     "kind": "dependent_field",
+     "columns": [
+      "property_zip",
+      "property_city",
+      "property_state"
+     ],
+     "description": "A ZIP code determines the city and the state.",
+     "confidence": "high",
+     "rationale": "ZIP to city holds on all 4,954 rows that have a ZIP. ZIP to state has 22 violations, which matches the lower-case and spelled-out state values found in the column pass.",
+     "rules": [
+      {
+       "id": "r_62f3f9e744",
+       "rule": {
+        "type": "reference_consistency",
+        "key_column": "property_zip",
+        "dependent_column": "property_city"
+       },
+       "severity": "warning",
+       "reason": "Holds on every row today."
+      },
+      {
+       "id": "r_cfd7b0654d",
+       "rule": {
+        "type": "reference_consistency",
+        "key_column": "property_zip",
+        "dependent_column": "property_state"
+       },
+       "severity": "error",
+       "reason": "22 rows carry a state that disagrees with the ZIP's usual state."
+      }
+     ],
+     "rejected_rules": []
+    },
+    {
+     "id": "rel_c55aed8e",
+     "kind": "dependent_field",
+     "columns": [
+      "mi_type_code",
+      "mi_coverage_pct"
+     ],
+     "description": "An insured loan (BPMI or LPMI) must state its coverage percentage.",
+     "confidence": "high",
+     "rationale": "2,295 rows are coded BPMI or LPMI, but mi_coverage_pct is filled on only 2,272 rows. An insurer cannot price or reserve for a loan with no coverage amount.",
+     "rules": [
+      {
+       "id": "r_b68d12fd1d",
+       "rule": {
+        "type": "conditional_not_null",
+        "column": "mi_coverage_pct",
+        "when_column": "mi_type_code",
+        "when_values": [
+         "BPMI",
+         "LPMI"
+        ]
+       },
+       "severity": "error",
+       "reason": "Coverage is required whenever the loan is insured."
+      }
+     ],
+     "rejected_rules": []
+    },
+    {
+     "id": "rel_13ef2acc",
+     "kind": "derived_field",
+     "columns": [
+      "ltv",
+      "original_upb",
+      "appraised_value"
+     ],
+     "description": "ltv is derived: original_upb divided by appraised_value, times 100.",
+     "confidence": "medium",
+     "rationale": "The names and the two-decimal percentages suggest the formula, and the engine can confirm it row by row. If it holds, the corrupted balances found in the column pass will also show up here.",
+     "rules": [
+      {
+       "id": "r_9f5f8f4518",
+       "rule": {
+        "type": "derived_ratio",
+        "column": "ltv",
+        "numerator_column": "original_upb",
+        "denominator_column": "appraised_value",
+        "multiplier": 100,
+        "tolerance": 0.01
+       },
+       "severity": "error",
+       "reason": "A stored ratio that disagrees with its inputs means one of the three fields is stale."
+      }
+     ],
+     "rejected_rules": []
+    },
+    {
+     "id": "rel_ad41461c",
+     "kind": "dependent_field",
+     "columns": [
+      "ltv",
+      "mi_type_code"
+     ],
+     "description": "Loans above 80% LTV normally carry mortgage insurance.",
+     "confidence": "medium",
+     "rationale": "The median LTV is 79.44 and 45.77% of loans are insured, which is consistent with the 80% convention. No rule type in the catalog expresses a numeric condition on another column, so this is recorded for the contract without a rule.",
+     "rules": [],
+     "rejected_rules": []
+    }
+   ],
+   "failures": [],
+   "passes": [
+    {
+     "name": "columns",
+     "effort": "low",
+     "calls": 25,
+     "retries": 0,
+     "usage": {
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "cache_creation_input_tokens": 0,
+      "cache_read_input_tokens": 0
+     },
+     "cost_usd": 0.0
+    },
+    {
+     "name": "relationships",
+     "effort": "high",
+     "calls": 1,
+     "retries": 0,
+     "usage": {
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "cache_creation_input_tokens": 0,
+      "cache_read_input_tokens": 0
+     },
+     "cost_usd": 0.0
+    }
+   ]
+  },
+  "events": [
+   {
+    "at": 0,
+    "event": {
+     "type": "started",
+     "total": 25
+    }
+   },
+   {
+    "at": 900,
+    "event": {
+     "type": "column",
+     "assessment": {
+      "column": "loan_id",
+      "business_definition": "Identifier the lender assigns to a loan. Each row of this table is meant to describe one loan.",
+      "sensitivity": "Internal",
+      "confidence": "high",
+      "rationale": "Every value has the shape AA99999999 and 5,000 of 5,014 rows are distinct; the profile lists it as a key candidate with 14 duplicated values. An internal reference number carries no personal information on its own.",
+      "rules": [
+       {
+        "id": "r_27795682e8",
+        "rule": {
+         "type": "not_null",
+         "column": "loan_id"
+        },
+        "severity": "error",
+        "reason": "No nulls today, and a loan cannot be tracked without its identifier."
+       },
+       {
+        "id": "r_46427a9996",
+        "rule": {
+         "type": "unique",
+         "columns": [
+          "loan_id"
+         ]
+        },
+        "severity": "error",
+        "reason": "99.72% unique with 14 duplicated values: the duplicates are the finding."
+       },
+       {
+        "id": "r_8986e67043",
+        "rule": {
+         "type": "regex",
+         "column": "loan_id",
+         "pattern": "[A-Z]{2}[0-9]{8}"
+        },
+        "severity": "warning",
+        "reason": "All values match the profiled shape."
+       }
+      ],
+      "rejected_rules": []
+     },
+     "done": 1,
+     "total": 25
+    }
+   },
+   {
+    "at": 1160,
+    "event": {
+     "type": "column",
+     "assessment": {
+      "column": "servicer_id",
+      "business_definition": "Code for the company that services the loan: it collects payments and manages escrow on the lender's behalf.",
+      "sensitivity": "Internal",
+      "confidence": "high",
+      "rationale": "Eight codes, SV01 to SV08, with no nulls and one shape. A counterparty code is business data, not personal data.",
+      "rules": [
+       {
+        "id": "r_c8bd02e702",
+        "rule": {
+         "type": "not_null",
+         "column": "servicer_id"
+        },
+        "severity": "error",
+        "reason": "Populated on every row."
+       },
+       {
+        "id": "r_d287d9f583",
+        "rule": {
+         "type": "in_set",
+         "column": "servicer_id",
+         "values": [
+          "SV01",
+          "SV02",
+          "SV03",
+          "SV04",
+          "SV05",
+          "SV06",
+          "SV07",
+          "SV08"
+         ]
+        },
+        "severity": "error",
+        "reason": "The profile lists exactly eight codes."
+       }
+      ],
+      "rejected_rules": []
+     },
+     "done": 2,
+     "total": 25
+    }
+   },
+   {
+    "at": 1420,
+    "event": {
+     "type": "column",
+     "assessment": {
+      "column": "servicer_loan_number",
+      "business_definition": "The servicer's own number for the loan. It identifies a loan within one servicer, not across servicers.",
+      "sensitivity": "Internal",
+      "confidence": "medium",
+      "rationale": "Six-digit integers with 2,016 distinct values across 5,014 rows, so numbers repeat between servicers; the profile pairs it with servicer_id as a composite key. Confirm with the servicing team that numbering is per servicer.",
+      "rules": [
+       {
+        "id": "r_16708ba997",
+        "rule": {
+         "type": "not_null",
+         "column": "servicer_loan_number"
+        },
+        "severity": "error",
+        "reason": "Populated on every row."
+       },
+       {
+        "id": "r_65e4f8973d",
+        "rule": {
+         "type": "parses_as",
+         "column": "servicer_loan_number",
+         "as_type": "integer"
+        },
+        "severity": "warning",
+        "reason": "All values parse as integers today."
+       }
+      ],
+      "rejected_rules": []
+     },
+     "done": 3,
+     "total": 25
+    }
+   },
+   {
+    "at": 1680,
+    "event": {
+     "type": "column",
+     "assessment": {
+      "column": "borrower_first_name",
+      "business_definition": "Given name of the primary borrower on the loan.",
+      "sensitivity": "Confidential",
+      "confidence": "high",
+      "rationale": "The column name and capitalized-word shapes point to a person's first name; values were masked in the profile. A name identifies an individual when combined with the other borrower fields.",
+      "rules": [
+       {
+        "id": "r_fd2840407c",
+        "rule": {
+         "type": "not_null",
+         "column": "borrower_first_name"
+        },
+        "severity": "error",
+        "reason": "No nulls today; a borrower record needs a name."
+       }
+      ],
+      "rejected_rules": []
+     },
+     "done": 4,
+     "total": 25
+    }
+   },
+   {
+    "at": 1940,
+    "event": {
+     "type": "column",
+     "assessment": {
+      "column": "borrower_last_name",
+      "business_definition": "Family name of the primary borrower on the loan.",
+      "sensitivity": "Confidential",
+      "confidence": "high",
+      "rationale": "Same evidence as the first name: a person-name column with capitalized-word shapes, masked in the profile.",
+      "rules": [
+       {
+        "id": "r_cb1ae8fad0",
+        "rule": {
+         "type": "not_null",
+         "column": "borrower_last_name"
+        },
+        "severity": "error",
+        "reason": "No nulls today; a borrower record needs a name."
+       }
+      ],
+      "rejected_rules": []
+     },
+     "done": 5,
+     "total": 25
+    }
+   },
+   {
+    "at": 2200,
+    "event": {
+     "type": "column",
+     "assessment": {
+      "column": "borrower_ssn",
+      "business_definition": "Social Security number of the primary borrower, used to verify identity and pull credit.",
+      "sensitivity": "Restricted",
+      "confidence": "high",
+      "rationale": "The name says SSN and 99.72% of values have the dashed shape 999-99-9999. A government identifier is the highest class and should be masked by default.",
+      "rules": [
+       {
+        "id": "r_d196bc228a",
+        "rule": {
+         "type": "not_null",
+         "column": "borrower_ssn"
+        },
+        "severity": "error",
+        "reason": "No nulls today."
+       },
+       {
+        "id": "r_c702e72636",
+        "rule": {
+         "type": "regex",
+         "column": "borrower_ssn",
+         "pattern": "[0-9]{3}-[0-9]{2}-[0-9]{4}"
+        },
+        "severity": "error",
+        "reason": "0.28% of values are nine digits with no dashes; one storage format prevents failed joins."
+       }
+      ],
+      "rejected_rules": []
+     },
+     "done": 6,
+     "total": 25
+    }
+   },
+   {
+    "at": 2460,
+    "event": {
+     "type": "column",
+     "assessment": {
+      "column": "borrower_dob",
+      "business_definition": "Date of birth of the primary borrower.",
+      "sensitivity": "Restricted",
+      "confidence": "high",
+      "rationale": "A date column named dob with every value parsing as a date. Date of birth is a direct identifier and, with a name, is enough to impersonate someone.",
+      "rules": [
+       {
+        "id": "r_a25a8d019b",
+        "rule": {
+         "type": "not_null",
+         "column": "borrower_dob"
+        },
+        "severity": "error",
+        "reason": "No nulls today."
+       },
+       {
+        "id": "r_ea8b995641",
+        "rule": {
+         "type": "parses_as",
+         "column": "borrower_dob",
+         "as_type": "date"
+        },
+        "severity": "error",
+        "reason": "100% of values parse as ISO dates."
+       },
+       {
+        "id": "r_56a519ddc1",
+        "rule": {
+         "type": "date_not_future",
+         "column": "borrower_dob"
+        },
+        "severity": "error",
+        "reason": "A birth date cannot be after the as-of date; none are today."
+       }
+      ],
+      "rejected_rules": []
+     },
+     "done": 7,
+     "total": 25
+    }
+   },
+   {
+    "at": 2720,
+    "event": {
+     "type": "column",
+     "assessment": {
+      "column": "borrower_email",
+      "business_definition": "Email address used to contact the borrower. Optional.",
+      "sensitivity": "Confidential",
+      "confidence": "high",
+      "rationale": "All non-null values match an email pattern and 12.17% of rows are empty, which fits an optional contact field, so no required rule is proposed.",
+      "rules": [
+       {
+        "id": "r_783f9781c6",
+        "rule": {
+         "type": "regex",
+         "column": "borrower_email",
+         "pattern": "[^@\\s]+@[^@\\s]+\\.[a-z]{2,}"
+        },
+        "severity": "warning",
+        "reason": "Every non-null value already has this shape."
+       }
+      ],
+      "rejected_rules": [
+       {
+        "rule": {
+         "type": "regex",
+         "column": "borrower_email",
+         "pattern": "(?!.*\\.\\.)[^@\\s]+@[^@\\s]+"
+        },
+        "reason": "'pattern' is not a valid RE2 regular expression (invalid perl operator: (?!)."
+       }
+      ]
+     },
+     "done": 8,
+     "total": 25
+    }
+   },
+   {
+    "at": 2980,
+    "event": {
+     "type": "column",
+     "assessment": {
+      "column": "property_address",
+      "business_definition": "Street address of the property that secures the loan.",
+      "sensitivity": "Confidential",
+      "confidence": "high",
+      "rationale": "A free-text address column with 33 distinct shapes, masked in the profile. A home address locates an identifiable person.",
+      "rules": [
+       {
+        "id": "r_54701177d5",
+        "rule": {
+         "type": "not_null",
+         "column": "property_address"
+        },
+        "severity": "error",
+        "reason": "No nulls today; the collateral must be locatable."
+       }
+      ],
+      "rejected_rules": []
+     },
+     "done": 9,
+     "total": 25
+    }
+   },
+   {
+    "at": 3240,
+    "event": {
+     "type": "column",
+     "assessment": {
+      "column": "property_city",
+      "business_definition": "City where the mortgaged property is located.",
+      "sensitivity": "Internal",
+      "confidence": "high",
+      "rationale": "69 city names with no nulls; the profile shows that property_zip determines it without exception. A city alone does not identify a person.",
+      "rules": [
+       {
+        "id": "r_4eacea63c5",
+        "rule": {
+         "type": "not_null",
+         "column": "property_city"
+        },
+        "severity": "error",
+        "reason": "Populated on every row."
+       }
+      ],
+      "rejected_rules": []
+     },
+     "done": 10,
+     "total": 25
+    }
+   },
+   {
+    "at": 3500,
+    "event": {
+     "type": "column",
+     "assessment": {
+      "column": "property_state",
+      "business_definition": "Two-letter USPS code of the state where the mortgaged property is located.",
+      "sensitivity": "Internal",
+      "confidence": "high",
+      "rationale": "99.56% of values are two capital letters across 14 states. The rest are lower-case codes and spelled-out names such as 'New Mexico', which will split any group-by on state.",
+      "rules": [
+       {
+        "id": "r_e99df8900e",
+        "rule": {
+         "type": "not_null",
+         "column": "property_state"
+        },
+        "severity": "error",
+        "reason": "Populated on every row."
+       },
+       {
+        "id": "r_45225bc40f",
+        "rule": {
+         "type": "in_set",
+         "column": "property_state",
+         "values": [
+          "UT",
+          "CA",
+          "AZ",
+          "CO",
+          "TX",
+          "ID",
+          "NV",
+          "WA",
+          "OR",
+          "NM",
+          "MT",
+          "WY",
+          "MA",
+          "NJ"
+         ]
+        },
+        "severity": "error",
+        "reason": "Only the 14 upper-case codes are valid; lower-case and spelled-out variants fail."
+       }
+      ],
+      "rejected_rules": []
+     },
+     "done": 11,
+     "total": 25
+    }
+   },
+   {
+    "at": 3760,
+    "event": {
+     "type": "column",
+     "assessment": {
+      "column": "property_zip",
+      "business_definition": "Five-digit ZIP code of the mortgaged property.",
+      "sensitivity": "Internal",
+      "confidence": "high",
+      "rationale": "Every non-null value is five digits and the column is kept as text because some codes start with zero. 1.2% of rows are empty.",
+      "rules": [
+       {
+        "id": "r_48d51c5404",
+        "rule": {
+         "type": "not_null",
+         "column": "property_zip"
+        },
+        "severity": "warning",
+        "reason": "1.2% of rows have no ZIP; geography-based pricing and reporting need it."
+       },
+       {
+        "id": "r_c5ca29c731",
+        "rule": {
+         "type": "regex",
+         "column": "property_zip",
+         "pattern": "[0-9]{5}"
+        },
+        "severity": "error",
+        "reason": "All non-null values match the five-digit shape."
+       }
+      ],
+      "rejected_rules": []
+     },
+     "done": 12,
+     "total": 25
+    }
+   },
+   {
+    "at": 4020,
+    "event": {
+     "type": "column",
+     "assessment": {
+      "column": "occupancy_code",
+      "business_definition": "How the borrower will use the property: P for primary residence, S for second home, I for investment property.",
+      "sensitivity": "Internal",
+      "confidence": "high",
+      "rationale": "P, I, and S cover 4,974 rows. Five other spellings appear on 40 rows (p, Primary, INV, 'S ' with a trailing space, and X); occupancy drives pricing, so the variants matter.",
+      "rules": [
+       {
+        "id": "r_21e48dc8f4",
+        "rule": {
+         "type": "not_null",
+         "column": "occupancy_code"
+        },
+        "severity": "error",
+        "reason": "Populated on every row."
+       },
+       {
+        "id": "r_66783dac0f",
+        "rule": {
+         "type": "in_set",
+         "column": "occupancy_code",
+         "values": [
+          "P",
+          "S",
+          "I"
+         ]
+        },
+        "severity": "error",
+        "reason": "Three valid codes; the 40 variant spellings should fail until they are mapped."
+       }
+      ],
+      "rejected_rules": []
+     },
+     "done": 13,
+     "total": 25
+    }
+   },
+   {
+    "at": 4280,
+    "event": {
+     "type": "column",
+     "assessment": {
+      "column": "loan_purpose_code",
+      "business_definition": "Why the loan was made: P for purchase, R for rate-and-term refinance, C for cash-out refinance.",
+      "sensitivity": "Internal",
+      "confidence": "low",
+      "rationale": "Three single-letter codes with no description column. The meanings are inferred from mortgage convention and the 55/27/18 split, so confirm them with the data owner before approving the definition.",
+      "rules": [
+       {
+        "id": "r_2c7e60019c",
+        "rule": {
+         "type": "not_null",
+         "column": "loan_purpose_code"
+        },
+        "severity": "error",
+        "reason": "Populated on every row."
+       },
+       {
+        "id": "r_1476b875b5",
+        "rule": {
+         "type": "in_set",
+         "column": "loan_purpose_code",
+         "values": [
+          "P",
+          "R",
+          "C"
+         ]
+        },
+        "severity": "error",
+        "reason": "The profile lists exactly three codes."
+       }
+      ],
+      "rejected_rules": []
+     },
+     "done": 14,
+     "total": 25
+    }
+   },
+   {
+    "at": 4540,
+    "event": {
+     "type": "column",
+     "assessment": {
+      "column": "product_code",
+      "business_definition": "Internal code for the mortgage product: fixed-rate terms (FRM30, FRM20, FRM15) and adjustable-rate products (ARM51, ARM71).",
+      "sensitivity": "Internal",
+      "confidence": "high",
+      "rationale": "Five codes sharing one shape, each paired with a readable name in product_description.",
+      "rules": [
+       {
+        "id": "r_2f21678a5f",
+        "rule": {
+         "type": "not_null",
+         "column": "product_code"
+        },
+        "severity": "error",
+        "reason": "Populated on every row."
+       },
+       {
+        "id": "r_36e6c4d7e7",
+        "rule": {
+         "type": "in_set",
+         "column": "product_code",
+         "values": [
+          "FRM30",
+          "FRM20",
+          "FRM15",
+          "ARM51",
+          "ARM71"
+         ]
+        },
+        "severity": "error",
+        "reason": "The profile lists exactly five codes."
+       }
+      ],
+      "rejected_rules": []
+     },
+     "done": 15,
+     "total": 25
+    }
+   },
+   {
+    "at": 4800,
+    "event": {
+     "type": "column",
+     "assessment": {
+      "column": "product_description",
+      "business_definition": "Customer-facing name of the mortgage product, such as '30-Year Fixed' or '5/1 ARM'.",
+      "sensitivity": "Public",
+      "confidence": "high",
+      "rationale": "Five product names that a lender prints on rate sheets. It is reference data with nothing specific to a borrower.",
+      "rules": [
+       {
+        "id": "r_f89fe5d93b",
+        "rule": {
+         "type": "not_null",
+         "column": "product_description"
+        },
+        "severity": "error",
+        "reason": "Populated on every row."
+       },
+       {
+        "id": "r_8c57d3e7b4",
+        "rule": {
+         "type": "in_set",
+         "column": "product_description",
+         "values": [
+          "30-Year Fixed",
+          "20-Year Fixed",
+          "15-Year Fixed",
+          "5/1 ARM",
+          "7/1 ARM"
+         ]
+        },
+        "severity": "error",
+        "reason": "The profile lists exactly five names."
+       }
+      ],
+      "rejected_rules": []
+     },
+     "done": 16,
+     "total": 25
+    }
+   },
+   {
+    "at": 5060,
+    "event": {
+     "type": "column",
+     "assessment": {
+      "column": "origination_date",
+      "business_definition": "Date the loan closed and the funds were disbursed.",
+      "sensitivity": "Internal",
+      "confidence": "high",
+      "rationale": "A date column running from 2018-01-02, but its maximum is 2033-05-10 and 6 values fall after the as-of date. 0.14% of rows are empty.",
+      "rules": [
+       {
+        "id": "r_cb6aabfc6b",
+        "rule": {
+         "type": "not_null",
+         "column": "origination_date"
+        },
+        "severity": "error",
+        "reason": "0.14% of rows have no origination date; loan age and seasoning cannot be computed without it."
+       },
+       {
+        "id": "r_8193beabc9",
+        "rule": {
+         "type": "parses_as",
+         "column": "origination_date",
+         "as_type": "date"
+        },
+        "severity": "error",
+        "reason": "All non-null values parse as ISO dates today."
+       },
+       {
+        "id": "r_1835597c8c",
+        "rule": {
+         "type": "date_not_future",
+         "column": "origination_date"
+        },
+        "severity": "error",
+        "reason": "6 values are after the as-of date; a loan cannot originate in the future."
+       }
+      ],
+      "rejected_rules": []
+     },
+     "done": 17,
+     "total": 25
+    }
+   },
+   {
+    "at": 5320,
+    "event": {
+     "type": "column",
+     "assessment": {
+      "column": "first_payment_date",
+      "business_definition": "Due date of the borrower's first scheduled payment, normally the first of the month one to two months after origination.",
+      "sensitivity": "Internal",
+      "confidence": "high",
+      "rationale": "99.64% of values parse as dates. The 18 that do not include 7 written with slashes, 4 with no separators, and 7 that look like dates but are not real calendar days. Dates after the as-of date are expected here, so no future check is proposed.",
+      "rules": [
+       {
+        "id": "r_f4beb7375f",
+        "rule": {
+         "type": "not_null",
+         "column": "first_payment_date"
+        },
+        "severity": "error",
+        "reason": "Populated on every row."
+       },
+       {
+        "id": "r_36ee51e8ea",
+        "rule": {
+         "type": "parses_as",
+         "column": "first_payment_date",
+         "as_type": "date"
+        },
+        "severity": "error",
+        "reason": "18 values are not valid ISO dates."
+       }
+      ],
+      "rejected_rules": []
+     },
+     "done": 18,
+     "total": 25
+    }
+   },
+   {
+    "at": 5580,
+    "event": {
+     "type": "column",
+     "assessment": {
+      "column": "original_upb",
+      "business_definition": "Unpaid principal balance at origination, in whole dollars: the original loan amount.",
+      "sensitivity": "Confidential",
+      "confidence": "high",
+      "rationale": "Median 335,600 with quartiles from 246,425 to 450,900, but the minimum is -255,500 (3 negative values) and the maximum is 25,910,000. A loan amount tied to a named borrower is nonpublic personal financial information.",
+      "rules": [
+       {
+        "id": "r_7d1e0f3a1d",
+        "rule": {
+         "type": "not_null",
+         "column": "original_upb"
+        },
+        "severity": "error",
+        "reason": "Populated on every row."
+       },
+       {
+        "id": "r_019d08c665",
+        "rule": {
+         "type": "parses_as",
+         "column": "original_upb",
+         "as_type": "integer"
+        },
+        "severity": "warning",
+        "reason": "All values parse as integers today."
+       },
+       {
+        "id": "r_5b215c8379",
+        "rule": {
+         "type": "range",
+         "column": "original_upb",
+         "min": 1,
+         "max": 5000000
+        },
+        "severity": "error",
+        "reason": "A balance must be positive, and the four largest outliers are 12 to 26 million against a 75th percentile of 450,900. The 5,000,000 ceiling is a judgment call to review."
+       }
+      ],
+      "rejected_rules": []
+     },
+     "done": 19,
+     "total": 25
+    }
+   },
+   {
+    "at": 5840,
+    "event": {
+     "type": "column",
+     "assessment": {
+      "column": "appraised_value",
+      "business_definition": "Appraised value of the property at origination, in whole dollars.",
+      "sensitivity": "Confidential",
+      "confidence": "medium",
+      "rationale": "Integers from 100,000 to 2,774,000 with a median of 425,000 and no negatives. The name suggests an appraisal, but it could also be the lower of appraisal and purchase price; confirm which.",
+      "rules": [
+       {
+        "id": "r_0a1de14d83",
+        "rule": {
+         "type": "not_null",
+         "column": "appraised_value"
+        },
+        "severity": "error",
+        "reason": "Populated on every row."
+       },
+       {
+        "id": "r_fc6d8f598e",
+        "rule": {
+         "type": "range",
+         "column": "appraised_value",
+         "min": 1,
+         "max": null
+        },
+        "severity": "error",
+        "reason": "A property value must be positive. No upper bound is proposed because high-value homes are legitimate."
+       }
+      ],
+      "rejected_rules": []
+     },
+     "done": 20,
+     "total": 25
+    }
+   },
+   {
+    "at": 6100,
+    "event": {
+     "type": "column",
+     "assessment": {
+      "column": "ltv",
+      "business_definition": "Loan-to-value ratio at origination, as a percentage: the original loan amount divided by the property value.",
+      "sensitivity": "Confidential",
+      "confidence": "high",
+      "rationale": "Decimals with a median of 79.44 and quartiles from 76.59 to 87.32, which is the usual clustering around 80%. The range runs from 35.00 to 114.48.",
+      "rules": [
+       {
+        "id": "r_7a5b187bcf",
+        "rule": {
+         "type": "not_null",
+         "column": "ltv"
+        },
+        "severity": "error",
+        "reason": "Populated on every row."
+       },
+       {
+        "id": "r_05b99c82be",
+        "rule": {
+         "type": "range",
+         "column": "ltv",
+         "min": 1,
+         "max": 105
+        },
+        "severity": "warning",
+        "reason": "Purchase and refinance programs rarely exceed 105% LTV; the maximum today is 114.48."
+       }
+      ],
+      "rejected_rules": []
+     },
+     "done": 21,
+     "total": 25
+    }
+   },
+   {
+    "at": 6360,
+    "event": {
+     "type": "column",
+     "assessment": {
+      "column": "interest_rate",
+      "business_definition": "Note rate of the loan at origination, in percent per year.",
+      "sensitivity": "Confidential",
+      "confidence": "high",
+      "rationale": "Quartiles run from 3.375 to 6.375, but the minimum is 0.03625 and 4 values sit above the upper fence at 33.75 to 63.75. Both look like scale errors: rates stored as fractions, and rates multiplied by ten.",
+      "rules": [
+       {
+        "id": "r_18a97fee3f",
+        "rule": {
+         "type": "not_null",
+         "column": "interest_rate"
+        },
+        "severity": "error",
+        "reason": "Populated on every row."
+       },
+       {
+        "id": "r_f6e320980c",
+        "rule": {
+         "type": "range",
+         "column": "interest_rate",
+         "min": 1,
+         "max": 15
+        },
+        "severity": "error",
+        "reason": "Mortgage note rates fall well inside 1 to 15 percent; values outside are on the wrong scale."
+       }
+      ],
+      "rejected_rules": []
+     },
+     "done": 22,
+     "total": 25
+    }
+   },
+   {
+    "at": 6620,
+    "event": {
+     "type": "column",
+     "assessment": {
+      "column": "fico_score",
+      "business_definition": "The borrower's FICO credit score at origination.",
+      "sensitivity": "Confidential",
+      "confidence": "high",
+      "rationale": "Quartiles run from 704 to 770, inside the 300 to 850 range FICO defines, but 9 values sit outside the fences, including 4 zeros and a maximum of 9999. A credit score is consumer report information.",
+      "rules": [
+       {
+        "id": "r_582d8a3833",
+        "rule": {
+         "type": "not_null",
+         "column": "fico_score"
+        },
+        "severity": "warning",
+        "reason": "2.99% of rows have no score. Some programs allow that, so monitor rather than block."
+       },
+       {
+        "id": "r_64ad2c84a7",
+        "rule": {
+         "type": "parses_as",
+         "column": "fico_score",
+         "as_type": "integer"
+        },
+        "severity": "warning",
+        "reason": "All non-null values parse as integers today."
+       },
+       {
+        "id": "r_8370a47473",
+        "rule": {
+         "type": "range",
+         "column": "fico_score",
+         "min": 300,
+         "max": 850
+        },
+        "severity": "error",
+        "reason": "FICO scores are defined from 300 to 850; zeros and 999-style values are placeholders, not scores."
+       }
+      ],
+      "rejected_rules": []
+     },
+     "done": 23,
+     "total": 25
+    }
+   },
+   {
+    "at": 6880,
+    "event": {
+     "type": "column",
+     "assessment": {
+      "column": "mi_type_code",
+      "business_definition": "Whether the loan carries mortgage insurance and who pays for it: BPMI is borrower-paid, LPMI is lender-paid, NONE means no insurance.",
+      "sensitivity": "Internal",
+      "confidence": "high",
+      "rationale": "Three codes with no nulls: NONE on 2,719 rows, BPMI on 1,955, and LPMI on 340.",
+      "rules": [
+       {
+        "id": "r_00735ff30a",
+        "rule": {
+         "type": "not_null",
+         "column": "mi_type_code"
+        },
+        "severity": "error",
+        "reason": "Populated on every row."
+       },
+       {
+        "id": "r_53c54da5db",
+        "rule": {
+         "type": "in_set",
+         "column": "mi_type_code",
+         "values": [
+          "NONE",
+          "BPMI",
+          "LPMI"
+         ]
+        },
+        "severity": "error",
+        "reason": "The profile lists exactly three codes."
+       }
+      ],
+      "rejected_rules": []
+     },
+     "done": 24,
+     "total": 25
+    }
+   },
+   {
+    "at": 7140,
+    "event": {
+     "type": "column",
+     "assessment": {
+      "column": "mi_coverage_pct",
+      "business_definition": "Share of the loan balance the mortgage insurer covers if the loan defaults, as a percentage. Empty when the loan has no mortgage insurance.",
+      "sensitivity": "Internal",
+      "confidence": "medium",
+      "rationale": "Only four values appear (12, 25, 30, and 35) and 54.69% of rows are empty, which is close to the share of loans coded NONE. Whether empty is correct depends on mi_type_code, so that check belongs to the cross-column pass.",
+      "rules": [
+       {
+        "id": "r_4dbfb74cc4",
+        "rule": {
+         "type": "in_set",
+         "column": "mi_coverage_pct",
+         "values": [
+          "12",
+          "25",
+          "30",
+          "35"
+         ]
+        },
+        "severity": "warning",
+        "reason": "Standard coverage tiers; a value outside them is probably a keying error."
+       }
+      ],
+      "rejected_rules": []
+     },
+     "done": 25,
+     "total": 25
+    }
+   },
+   {
+    "at": 7140,
+    "event": {
+     "type": "pass",
+     "summary": {
+      "name": "columns",
+      "effort": "low",
+      "calls": 25,
+      "retries": 0,
+      "usage": {
+       "input_tokens": 0,
+       "output_tokens": 0,
+       "cache_creation_input_tokens": 0,
+       "cache_read_input_tokens": 0
+      },
+      "cost_usd": 0.0
+     }
+    }
+   },
+   {
+    "at": 9540,
+    "event": {
+     "type": "relationships",
+     "relationships": [
+      {
+       "id": "rel_1b571475",
+       "kind": "candidate_key",
+       "columns": [
+        "loan_id"
+       ],
+       "description": "loan_id is the primary key of the table: one row per loan.",
+       "confidence": "high",
+       "rationale": "It is 99.72% unique with 14 duplicated values, and the dataset has 8 fully identical rows, so the duplicates are load errors rather than a wider grain. borrower_ssn is also nearly unique, but one borrower can hold several loans, so it is not a key.",
+       "rules": [],
+       "rejected_rules": []
+      },
+      {
+       "id": "rel_d8c50929",
+       "kind": "composite_key",
+       "columns": [
+        "servicer_id",
+        "servicer_loan_number"
+       ],
+       "description": "A servicer and its loan number together identify one loan. This is the alternate key to use when matching against servicer files.",
+       "confidence": "high",
+       "rationale": "The pair is 99.72% unique. If the two columns were unrelated, about 779 colliding rows would be expected; only 14 are observed, the same count as the loan_id duplicates.",
+       "rules": [
+        {
+         "id": "r_a40c1a69e3",
+         "rule": {
+          "type": "unique",
+          "columns": [
+           "servicer_id",
+           "servicer_loan_number"
+          ]
+         },
+         "severity": "error",
+         "reason": "Enforces the alternate key; the 14 duplicate rows fail it."
+        }
+       ],
+       "rejected_rules": []
+      },
+      {
+       "id": "rel_71f1ee6b",
+       "kind": "date_ordering",
+       "columns": [
+        "origination_date",
+        "first_payment_date"
+       ],
+       "description": "A loan's first payment falls after its origination date.",
+       "confidence": "high",
+       "rationale": "The ordering holds on 99.70% of the 4,989 rows where both dates parse; 15 rows have a first payment dated before origination.",
+       "rules": [
+        {
+         "id": "r_9391bf24fc",
+         "rule": {
+          "type": "date_order",
+          "before_column": "origination_date",
+          "after_column": "first_payment_date",
+          "allow_equal": false
+         },
+         "severity": "error",
+         "reason": "A payment cannot be due before the loan exists."
+        }
+       ],
+       "rejected_rules": []
+      },
+      {
+       "id": "rel_34428c9f",
+       "kind": "date_ordering",
+       "columns": [
+        "borrower_dob",
+        "origination_date"
+       ],
+       "description": "A borrower is born before the loan originates.",
+       "confidence": "high",
+       "rationale": "The ordering holds on all 5,007 rows where both dates are present. It costs nothing to keep as a guard against swapped date fields.",
+       "rules": [
+        {
+         "id": "r_7a58b5dd3d",
+         "rule": {
+          "type": "date_order",
+          "before_column": "borrower_dob",
+          "after_column": "origination_date",
+          "allow_equal": false
+         },
+         "severity": "warning",
+         "reason": "Holds on every row today."
+        }
+       ],
+       "rejected_rules": []
+      },
+      {
+       "id": "rel_e9aaefb9",
+       "kind": "code_description_pair",
+       "columns": [
+        "product_code",
+        "product_description"
+       ],
+       "description": "product_description is the readable name of product_code: each code has exactly one description.",
+       "confidence": "high",
+       "rationale": "The mapping holds on 99.82% of rows in both directions; 9 rows carry a description that belongs to a different code.",
+       "rules": [
+        {
+         "id": "r_45754ffcbd",
+         "rule": {
+          "type": "reference_consistency",
+          "key_column": "product_code",
+          "dependent_column": "product_description"
+         },
+         "severity": "error",
+         "reason": "A code must always carry the same description; 9 rows disagree with the majority mapping."
+        }
+       ],
+       "rejected_rules": []
+      },
+      {
+       "id": "rel_ef0d7dad",
+       "kind": "dependent_field",
+       "columns": [
+        "property_zip",
+        "property_city",
+        "property_state"
+       ],
+       "description": "A ZIP code determines the city and the state.",
+       "confidence": "high",
+       "rationale": "ZIP to city holds on all 4,954 rows that have a ZIP. ZIP to state has 22 violations, which matches the lower-case and spelled-out state values found in the column pass.",
+       "rules": [
+        {
+         "id": "r_62f3f9e744",
+         "rule": {
+          "type": "reference_consistency",
+          "key_column": "property_zip",
+          "dependent_column": "property_city"
+         },
+         "severity": "warning",
+         "reason": "Holds on every row today."
+        },
+        {
+         "id": "r_cfd7b0654d",
+         "rule": {
+          "type": "reference_consistency",
+          "key_column": "property_zip",
+          "dependent_column": "property_state"
+         },
+         "severity": "error",
+         "reason": "22 rows carry a state that disagrees with the ZIP's usual state."
+        }
+       ],
+       "rejected_rules": []
+      },
+      {
+       "id": "rel_c55aed8e",
+       "kind": "dependent_field",
+       "columns": [
+        "mi_type_code",
+        "mi_coverage_pct"
+       ],
+       "description": "An insured loan (BPMI or LPMI) must state its coverage percentage.",
+       "confidence": "high",
+       "rationale": "2,295 rows are coded BPMI or LPMI, but mi_coverage_pct is filled on only 2,272 rows. An insurer cannot price or reserve for a loan with no coverage amount.",
+       "rules": [
+        {
+         "id": "r_b68d12fd1d",
+         "rule": {
+          "type": "conditional_not_null",
+          "column": "mi_coverage_pct",
+          "when_column": "mi_type_code",
+          "when_values": [
+           "BPMI",
+           "LPMI"
+          ]
+         },
+         "severity": "error",
+         "reason": "Coverage is required whenever the loan is insured."
+        }
+       ],
+       "rejected_rules": []
+      },
+      {
+       "id": "rel_13ef2acc",
+       "kind": "derived_field",
+       "columns": [
+        "ltv",
+        "original_upb",
+        "appraised_value"
+       ],
+       "description": "ltv is derived: original_upb divided by appraised_value, times 100.",
+       "confidence": "medium",
+       "rationale": "The names and the two-decimal percentages suggest the formula, and the engine can confirm it row by row. If it holds, the corrupted balances found in the column pass will also show up here.",
+       "rules": [
+        {
+         "id": "r_9f5f8f4518",
+         "rule": {
+          "type": "derived_ratio",
+          "column": "ltv",
+          "numerator_column": "original_upb",
+          "denominator_column": "appraised_value",
+          "multiplier": 100,
+          "tolerance": 0.01
+         },
+         "severity": "error",
+         "reason": "A stored ratio that disagrees with its inputs means one of the three fields is stale."
+        }
+       ],
+       "rejected_rules": []
+      },
+      {
+       "id": "rel_ad41461c",
+       "kind": "dependent_field",
+       "columns": [
+        "ltv",
+        "mi_type_code"
+       ],
+       "description": "Loans above 80% LTV normally carry mortgage insurance.",
+       "confidence": "medium",
+       "rationale": "The median LTV is 79.44 and 45.77% of loans are insured, which is consistent with the 80% convention. No rule type in the catalog expresses a numeric condition on another column, so this is recorded for the contract without a rule.",
+       "rules": [],
+       "rejected_rules": []
+      }
+     ]
+    }
+   },
+   {
+    "at": 9540,
+    "event": {
+     "type": "pass",
+     "summary": {
+      "name": "relationships",
+      "effort": "high",
+      "calls": 1,
+      "retries": 0,
+      "usage": {
+       "input_tokens": 0,
+       "output_tokens": 0,
+       "cache_creation_input_tokens": 0,
+       "cache_read_input_tokens": 0
+      },
+      "cost_usd": 0.0
+     }
+    }
+   }
+  ]
+ }
+}

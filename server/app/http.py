@@ -17,6 +17,7 @@ from typing import Any
 
 import anthropic
 from fastapi import FastAPI, Header, HTTPException, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse
 
@@ -102,23 +103,35 @@ class RateLimiter:
             raise HTTPException(status_code=429, detail="Too many requests. Wait a moment.")
 
 
-def create_app(title: str, *, max_body_bytes: int = 64 * 1024) -> FastAPI:
-    """A FastAPI app with CORS for the frontend, a body size cap, and the kit's error envelope."""
+def create_app(
+    title: str,
+    *,
+    max_body_bytes: int = 64 * 1024,
+    body_limits: dict[str, int] | None = None,
+    default_origins: tuple[str, ...] = ("http://localhost:3000",),
+) -> FastAPI:
+    """A FastAPI app with CORS for the frontend, a body size cap, and the kit's error envelope.
+
+    `body_limits` raises (or lowers) the cap for individual paths, so one upload endpoint
+    does not force every other endpoint to accept large bodies.
+    """
     app = FastAPI(title=title)
     origins = [o.strip() for o in os.environ.get("ALLOWED_ORIGINS", "").split(",") if o.strip()]
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=origins or ["http://localhost:3000"],
+        allow_origins=origins or list(default_origins),
         allow_methods=["GET", "POST"],
         allow_headers=["content-type", "x-anthropic-key"],
     )
+    limits = body_limits or {}
 
     @app.middleware("http")
     async def limit_body(request: Request, call_next):  # type: ignore[no-untyped-def]
+        limit = limits.get(request.url.path, max_body_bytes)
         declared = request.headers.get("content-length")
-        if declared and declared.isdigit() and int(declared) > max_body_bytes:
+        if declared and declared.isdigit() and int(declared) > limit:
             return _fail(413, "too_large", "Request body is too large.")
-        if request.method == "POST" and len(await request.body()) > max_body_bytes:
+        if request.method == "POST" and len(await request.body()) > limit:
             return _fail(413, "too_large", "Request body is too large.")
         return await call_next(request)
 
@@ -128,6 +141,11 @@ def create_app(title: str, *, max_body_bytes: int = 64 * 1024) -> FastAPI:
             error.status_code, "invalid" if error.status_code < 500 else "server"
         )
         return _fail(error.status_code, kind, str(error.detail))
+
+    @app.exception_handler(RequestValidationError)
+    async def invalid_body(_: Request, __: RequestValidationError) -> JSONResponse:
+        # Same envelope as every other error, and no echo of what was sent.
+        return _fail(400, "invalid", "Request body has an invalid shape.")
 
     @app.get("/health")
     def health() -> dict[str, str]:

@@ -156,7 +156,7 @@ export function LivePanel({ open, onClose, apiUrl, bundle, isSample, state, onUp
             </Button>
           </Step>
 
-          <Step number={4} title="Run the assessment" done={!!bundle.run && !isSample}>
+          <Step number={4} title="Run the assessment" done={!busy && bundle.meta?.mode === "live"}>
             <p>
               Pass 1 makes one call per column at low effort. Pass 2 makes one call at high effort for cross-column relationships.
               Both reuse one cached prompt that holds the masked profile: Claude sees aggregates and value shapes, never rows.

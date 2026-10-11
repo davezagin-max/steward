@@ -42,8 +42,10 @@ export function plural(count: number, one: string, many = `${one}s`): string {
   return `${formatInt(count)} ${count === 1 ? one : many}`;
 }
 
-/** At most three significant digits below 1, compact above 10,000: for tight spaces. */
+/** For tight spaces: three significant digits below 1, three decimals below 1,000, compact above. */
 export function formatShort(value: number): string {
-  if (value !== 0 && Math.abs(value) < 1) return String(Number(value.toPrecision(3)));
-  return formatCompact(Number.isInteger(value) ? value : Number(value.toFixed(2)));
+  const abs = Math.abs(value);
+  if (value !== 0 && abs < 1) return String(Number(value.toPrecision(3)));
+  if (abs < 1000) return String(Number(value.toFixed(3)));
+  return formatCompact(Math.round(value));
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, type KeyboardEvent } from "react";
+import { useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { resultFor } from "@/lib/steward/exports";
 import { formatInt } from "@/lib/steward/format";
 import {
@@ -78,6 +78,17 @@ export function ReviewQueue() {
   const [confidence, setConfidence] = useState<Confidence | "all">("all");
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const listRef = useRef<HTMLUListElement>(null);
+  const focusAfterRender = useRef<number | null>(null);
+
+  // Runs after every render; does something only right after a keyboard decision.
+  useLayoutEffect(() => {
+    const index = focusAfterRender.current;
+    if (index === null) return;
+    focusAfterRender.current = null;
+    const rows = listRef.current?.children;
+    if (rows?.length) (rows[Math.min(index, rows.length - 1)] as HTMLElement).focus();
+  });
 
   const counts = countItems(review, items);
   const shown = useMemo(() => {
@@ -114,11 +125,17 @@ export function ReviewQueue() {
     if (event.target !== event.currentTarget || event.metaKey || event.ctrlKey || event.altKey) return;
     const row = event.currentTarget;
     const key = event.key.toLowerCase();
+    const decideAndStay = (type: "approve" | "reject" | "reopen") => {
+      // A decided row usually leaves the filtered list. Keep the keyboard on the row that
+      // takes its place, so A, A, A works through the queue.
+      focusAfterRender.current = Array.prototype.indexOf.call(row.parentElement?.children ?? [], row);
+      act({ type, ids: [item.id] });
+    };
     if (key === "j" || key === "arrowdown") (row.nextElementSibling as HTMLElement | null)?.focus();
     else if (key === "k" || key === "arrowup") (row.previousElementSibling as HTMLElement | null)?.focus();
-    else if (key === "a") act({ type: "approve", ids: [item.id] });
-    else if (key === "r") act({ type: "reject", ids: [item.id] });
-    else if (key === "u") act({ type: "reopen", ids: [item.id] });
+    else if (key === "a") decideAndStay("approve");
+    else if (key === "r") decideAndStay("reject");
+    else if (key === "u") decideAndStay("reopen");
     else if (key === "x" || key === " ") toggle(item.id);
     else return;
     event.preventDefault();
@@ -154,15 +171,14 @@ export function ReviewQueue() {
 
       <div className="flex flex-col gap-2 rounded-lg border border-border bg-bg p-2.5">
         <div className="flex flex-wrap items-center gap-2">
-          <div role="tablist" aria-label="Filter by status" className="inline-flex rounded-md border border-border-strong p-0.5">
+          <div role="group" aria-label="Filter by status" className="inline-flex max-w-full overflow-x-auto rounded-md border border-border-strong p-0.5">
             {tabs.map(([value, label, count]) => (
               <button
                 key={value}
                 type="button"
-                role="tab"
-                aria-selected={status === value}
+                aria-pressed={status === value}
                 onClick={() => setStatus(value)}
-                className="rounded px-2.5 py-1 text-[13px] text-muted hover:text-fg aria-selected:bg-accent-soft aria-selected:font-medium aria-selected:text-accent-ink"
+                className="whitespace-nowrap rounded px-2.5 py-1 text-[13px] text-muted hover:text-fg aria-pressed:bg-accent-soft aria-pressed:font-medium aria-pressed:text-accent-ink"
               >
                 {label} <span className="tabular-nums opacity-80">{count}</span>
               </button>
@@ -240,7 +256,7 @@ export function ReviewQueue() {
             : "Change the status, kind, or search to see more."}
         </Notice>
       ) : (
-        <ul className="overflow-hidden rounded-lg border border-border bg-bg" aria-label="Suggestions">
+        <ul ref={listRef} className="overflow-hidden rounded-lg border border-border bg-bg" aria-label="Suggestions">
           {shown.map((item) => {
             const decision = decisionOf(review, item);
             return (

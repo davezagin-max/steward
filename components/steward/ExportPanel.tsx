@@ -179,15 +179,14 @@ export function ExportPanel() {
         </div>
       </header>
 
-      <div role="tablist" aria-label="Export" className="flex gap-1 overflow-x-auto border-b border-border">
+      <div role="group" aria-label="Which export" className="flex gap-1 overflow-x-auto border-b border-border">
         {(Object.keys(files) as Tab[]).map((value) => (
           <button
             key={value}
             type="button"
-            role="tab"
-            aria-selected={tab === value}
+            aria-pressed={tab === value}
             onClick={() => setTab(value)}
-            className="-mb-px whitespace-nowrap border-b-2 border-transparent px-3 py-2 text-[13px] text-muted hover:text-fg aria-selected:border-accent aria-selected:font-medium aria-selected:text-fg"
+            className="-mb-px whitespace-nowrap border-b-2 border-transparent px-3 py-2 text-[13px] text-muted hover:text-fg aria-pressed:border-accent aria-pressed:font-medium aria-pressed:text-fg"
           >
             {files[value].label}
           </button>

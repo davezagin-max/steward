@@ -253,6 +253,30 @@ def test_a_refused_run_is_reported_as_a_refusal() -> None:
     assert "policy" in last["error"]["message"]
 
 
+def test_recording_a_live_run_writes_a_fixture_the_export_can_use(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Any
+) -> None:
+    """What `pnpm record` does, with a scripted client standing in for the API."""
+    from app.assess import AssessmentRun, all_rules
+
+    monkeypatch.setenv("RECORD_FIXTURES", "1")
+    monkeypatch.setattr(demo, "FIXTURE_DIR", tmp_path)
+    app.dependency_overrides[get_client] = lambda: ScriptedClient()
+    try:
+        res = client.post("/api/assess", json={"demoId": "sample-loans", "dataset": "sample"})
+        assert frames(res.text)[-1]["type"] == "done"
+        recorded = json.loads((tmp_path / "assess.json").read_text())["sample-loans"]
+    finally:
+        demo.load_store.cache_clear()
+    assert recorded["placeholder"] is False and recorded["recordedAt"]
+    assert recorded["model"] == "claude-opus-5-5" and recorded["costUsd"] > 0
+    assert recorded["usage"]["cache_read_input_tokens"] == 9000 * 25
+    run = AssessmentRun.model_validate(recorded["data"])
+    assert len(run.assessments) == 25 and len(all_rules(run)) == 57
+    kinds = [item["event"]["type"] for item in recorded["events"]]
+    assert kinds.count("column") == 25 and kinds[-1] == "pass"
+
+
 # ----------------------------------------------------------------- kit behavior
 
 

@@ -1,18 +1,34 @@
 {
   "port": 3230,
   "shots": [
+    { "name": "hero", "path": "/", "theme": "light", "viewport": "desktop", "actions": [{ "click": "button:has-text('high-confidence')" }, { "click": "nav[aria-label='Columns'] >> text=interest_rate" }, { "wait": 200 }, { "click": "summary:has-text('Failing rows')" }, { "wait": 200 }] },
+    { "name": "hero-dark", "path": "/", "theme": "dark", "viewport": "desktop", "actions": [{ "click": "button:has-text('high-confidence')" }, { "click": "nav[aria-label='Columns'] >> text=interest_rate" }, { "wait": 200 }, { "click": "summary:has-text('Failing rows')" }, { "wait": 200 }] },
     { "name": "first-screen", "path": "/", "theme": "light", "viewport": "desktop", "actions": [{ "waitFor": "h2" }] },
-    { "name": "first-screen-dark", "path": "/", "theme": "dark", "viewport": "desktop", "actions": [{ "waitFor": "h2" }] },
     { "name": "mobile", "path": "/", "theme": "light", "viewport": "mobile", "actions": [{ "waitFor": "h2" }] },
-    { "name": "mobile-dark-full", "path": "/", "theme": "dark", "viewport": "mobile", "fullPage": true, "actions": [{ "waitFor": "h2" }] },
-    { "name": "column-full", "path": "/", "theme": "light", "viewport": "desktop", "fullPage": true, "actions": [{ "click": "nav[aria-label='Columns'] >> text=occupancy_code" }, { "wait": 200 }, { "click": "text=Failing rows" }] },
-    { "name": "hero", "path": "/", "theme": "light", "viewport": "desktop", "actions": [{ "click": "button:has-text('high-confidence')" }, { "click": "nav[aria-label='Columns'] >> text=interest_rate" }, { "wait": 200 }, { "click": "text=Failing rows" }, { "wait": 200 }] },
-    { "name": "hero-dark", "path": "/", "theme": "dark", "viewport": "desktop", "actions": [{ "click": "button:has-text('high-confidence')" }, { "click": "nav[aria-label='Columns'] >> text=interest_rate" }, { "wait": 200 }, { "click": "text=Failing rows" }, { "wait": 200 }] },
-    { "name": "relationships", "path": "/", "theme": "light", "viewport": "desktop", "fullPage": true, "actions": [{ "click": "nav[aria-label='Columns'] >> text=Cross-column" }, { "wait": 200 }] },
+    { "name": "mobile-dark", "path": "/", "theme": "dark", "viewport": "mobile", "actions": [{ "click": "nav[aria-label='Views'] >> text=Review queue" }, { "wait": 200 }] },
+    { "name": "column", "path": "/", "theme": "light", "viewport": "desktop", "fullPage": true, "actions": [{ "click": "nav[aria-label='Columns'] >> text=occupancy_code" }, { "wait": 200 }, { "click": "summary:has-text('Failing rows')" }, { "click": "summary:has-text('Rule as data')" }] },
+    { "name": "relationships", "path": "/", "theme": "light", "viewport": "desktop", "actions": [{ "click": "nav[aria-label='Columns'] >> text=Cross-column" }, { "wait": 200 }] },
     { "name": "queue", "path": "/", "theme": "light", "viewport": "desktop", "actions": [{ "click": "nav[aria-label='Views'] >> text=Review queue" }, { "wait": 200 }] },
     { "name": "contract", "path": "/", "theme": "dark", "viewport": "desktop", "actions": [{ "click": "button:has-text('high-confidence')" }, { "click": "nav[aria-label='Views'] >> text=Exports" }, { "wait": 200 }] },
-    { "name": "quality", "path": "/", "theme": "light", "viewport": "desktop", "fullPage": true, "actions": [{ "click": "button:has-text('high-confidence')" }, { "click": "nav[aria-label='Views'] >> text=Exports" }, { "click": "text=Quality report" }, { "wait": 200 }] },
+    { "name": "quality", "path": "/", "theme": "light", "viewport": "desktop", "actions": [{ "click": "button:has-text('high-confidence')" }, { "click": "nav[aria-label='Views'] >> text=Exports" }, { "click": "button:has-text('Quality report')" }, { "wait": 200 }] },
     { "name": "audit", "path": "/", "theme": "light", "viewport": "desktop", "actions": [{ "click": "button:has-text('high-confidence')" }, { "click": "button:has-text('Audit log')" }, { "wait": 300 }] },
     { "name": "live-panel", "path": "/", "theme": "light", "viewport": "desktop", "actions": [{ "click": "button:has-text('Use your own data')" }, { "wait": 300 }] }
-  ]
+  ],
+  "gif": {
+    "path": "/",
+    "theme": "light",
+    "actions": [
+      { "wait": 700 },
+      { "click": "button:has-text('high-confidence')" },
+      { "wait": 1000 },
+      { "click": "nav[aria-label='Columns'] >> text=occupancy_code" },
+      { "wait": 800 },
+      { "click": "summary:has-text('Failing rows')" },
+      { "wait": 1200 },
+      { "click": "nav[aria-label='Views'] >> text=Review queue" },
+      { "wait": 1000 },
+      { "click": "nav[aria-label='Views'] >> text=Exports" },
+      { "wait": 1400 }
+    ]
+  }
 }

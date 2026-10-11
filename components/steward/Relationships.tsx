@@ -199,8 +199,10 @@ export function Relationships() {
         ))
       ) : (
         !failure && (
-          <Notice title="No relationship suggestions yet">
-            The facts above come from the profiler. Run the Claude assessment to get relationships and rules to review.
+          <Notice title={bundle.run ? "Claude recorded no cross-column relationships" : "No relationship suggestions yet"}>
+            {bundle.run
+              ? "The facts above come from the profiler. The second pass did not find a key, ordering, or dependency worth documenting."
+              : "The facts above come from the profiler. Run the Claude assessment to get relationships and rules to review."}
           </Notice>
         )
       )}

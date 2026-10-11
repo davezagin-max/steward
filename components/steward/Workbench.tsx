@@ -157,7 +157,7 @@ export function Workbench() {
     show(
       {
         meta: null,
-        dataset: { id: "upload", name: profile.dataset, title: profile.dataset, as_of: profile.as_of, key_columns, synthetic: false },
+        dataset: { id: "upload", name: profile.dataset, title: "Your upload", as_of: profile.as_of, key_columns, synthetic: false },
         profile,
         model_view,
         run: null,

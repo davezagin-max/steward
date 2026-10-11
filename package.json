@@ -13,7 +13,8 @@
     "check": "pnpm lint && pnpm typecheck && pnpm test && pnpm build",
     "smoke": "vitest run tests/kit/smoke.live.test.ts",
     "record": "cd server && uv run python scripts/record.py --port 8130 && uv run python -m scripts.export_demo",
-    "screenshots": "node scripts/screenshot.mjs"
+    "screenshots": "node scripts/screenshot.mjs",
+    "e2e:live": "node scripts/e2e-live.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.133.0",

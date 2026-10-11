@@ -19,6 +19,7 @@ import { ExportPanel } from "./ExportPanel";
 import { LivePanel, type LiveState } from "./LivePanel";
 import { Relationships } from "./Relationships";
 import { ReviewQueue } from "./ReviewQueue";
+import { SampleKey } from "./SampleKey";
 import { Button, Chip, Icon } from "./ui";
 
 type View = "columns" | "queue" | "exports";
@@ -82,6 +83,7 @@ export function Workbench() {
   const [selection, setSelection] = useState<Selection>({ type: "column", name: DEMO_BUNDLE.profile.columns[0].name });
   const [auditOpen, setAuditOpen] = useState(false);
   const [liveOpen, setLiveOpen] = useState(false);
+  const [keyOpen, setKeyOpen] = useState(false);
   /** The uploaded file's text. Kept in memory only, so edited rules can be re-run on it. */
   const upload = useRef<{ name: string; csv: string } | null>(null);
   const abort = useRef<AbortController | null>(null);
@@ -301,6 +303,15 @@ export function Workbench() {
             <p className="flex flex-wrap items-center gap-2 text-[15px] font-semibold">
               <span className="truncate">{bundle.dataset.title}</span>
               {bundle.dataset.synthetic && <Chip title="Generated with Faker. No real people or loans.">all data is fake</Chip>}
+              {bundle.planted.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setKeyOpen(true)}
+                  className="rounded text-xs font-normal text-accent-ink underline decoration-dotted underline-offset-2 hover:decoration-solid"
+                >
+                  {bundle.planted.length} planted problems
+                </button>
+              )}
             </p>
             <p className="mt-0.5 font-mono text-xs text-muted">
               {bundle.dataset.name} · {formatInt(bundle.profile.row_count)} rows · {bundle.profile.column_count} columns · as of{" "}
@@ -370,6 +381,7 @@ export function Workbench() {
       </main>
 
       <AuditDrawer open={auditOpen} onClose={() => setAuditOpen(false)} />
+      <SampleKey open={keyOpen} onClose={() => setKeyOpen(false)} />
       <LivePanel
         open={liveOpen}
         onClose={() => setLiveOpen(false)}

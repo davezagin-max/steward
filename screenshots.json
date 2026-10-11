@@ -12,6 +12,7 @@
     { "name": "contract", "path": "/", "theme": "dark", "viewport": "desktop", "actions": [{ "click": "button:has-text('high-confidence')" }, { "click": "nav[aria-label='Views'] >> text=Exports" }, { "wait": 200 }] },
     { "name": "quality", "path": "/", "theme": "light", "viewport": "desktop", "actions": [{ "click": "button:has-text('high-confidence')" }, { "click": "nav[aria-label='Views'] >> text=Exports" }, { "click": "button:has-text('Quality report')" }, { "wait": 200 }] },
     { "name": "audit", "path": "/", "theme": "light", "viewport": "desktop", "actions": [{ "click": "button:has-text('high-confidence')" }, { "click": "button:has-text('Audit log')" }, { "wait": 300 }] },
+    { "name": "answer-key", "path": "/", "theme": "light", "viewport": "desktop", "actions": [{ "click": "button:has-text('planted problems')" }, { "wait": 300 }] },
     { "name": "live-panel", "path": "/", "theme": "light", "viewport": "desktop", "actions": [{ "click": "button:has-text('Use your own data')" }, { "wait": 300 }] }
   ],
   "gif": {

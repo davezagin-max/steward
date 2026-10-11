@@ -8,6 +8,7 @@ from datetime import date
 
 import pytest
 
+from app.assess import build_system_prompt
 from app.dataset import TABLE, Dataset, load_csv, quote_ident, sample_bytes
 from app.profiler import (
     FENCE_K,
@@ -114,6 +115,8 @@ def test_empty_constant_and_all_null_columns_do_not_break() -> None:
         (r"A\+", r"[A-Z]\+"),
         ("9/9 A+", "[0-9]/[0-9] [A-Z]{3,}"),
         ("(999) 999-9999", r"\([0-9]{3}\) [0-9]{3}-[0-9]{4}"),
+        ("AaaU", r"[A-Z][a-z]{2}[^\x00-\x7F]"),
+        ("U+ UU", r"[^\x00-\x7F]{3,} [^\x00-\x7F]{2}"),
     ],
 )
 def test_shape_to_regex(shape: str, regex: str) -> None:
@@ -285,6 +288,35 @@ def test_model_view_never_contains_raw_values_from_sensitive_columns(profile: Pr
         assert "values" not in view and "numeric" not in view
         assert set(view.get("dates", {})) <= {"future_count"}
         assert "examples" not in json.dumps(view)
+
+
+def test_no_character_of_a_masked_value_survives_in_its_shape() -> None:
+    # Shapes are all the model is shown for a masked column. Accented, Cyrillic, and CJK
+    # letters are not in [A-Za-z], so each one must still be generalized.
+    names = ["José García", "Zoë Müller", "王小明", "Иван Петров", "Søren Kierkegård", "Ann Lee"]
+    dataset = make_dataset(["customer_name"], [(name,) for name in names * 5])
+    profile = profile_dataset(dataset, AS_OF)
+    name = column(profile, "customer_name")
+    assert name.sensitive and column_model_view(name)["values_masked"] is True
+    shapes = {shape.shape: shape for shape in name.shapes}
+    assert set(shapes) == {"AaaU Aa+Ua", "AaU AUa+", "U+", "U+ U+", "AUa+ Aa+Uaa", "Aaa Aaa"}
+    assert shapes["U+"].regex == r"[^\x00-\x7F]{3,}"
+
+    sent = json.dumps(model_view(profile), ensure_ascii=False)
+    assert all(ord(character) < 128 for character in sent)
+    for value in names[:5]:
+        assert not any(part in sent for part in value.split())
+    assert not any(part in build_system_prompt(profile) for part in ("王", "Иван", "é", "ø"))
+
+    # The regex beside each shape still selects exactly the rows with that shape.
+    q = quote_ident("customer_name")
+    for shape in name.shapes:
+        by_shape, by_regex = dataset.con.execute(
+            f"SELECT count(*) FILTER (WHERE {shape_sql(q)} = $shape), "
+            f"count(*) FILTER (WHERE regexp_full_match({q}, $regex)) FROM {TABLE}",
+            {"shape": shape.shape, "regex": shape.regex},
+        ).fetchone()
+        assert by_shape == by_regex == shape.count == 5
 
 
 def test_model_view_lists_code_values_including_the_rare_dirty_ones(profile: Profile) -> None:

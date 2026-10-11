@@ -207,28 +207,38 @@ class Profile(BaseModel):
 # --------------------------------------------------------------------------- shapes
 
 
+NON_ASCII = r"[^\x00-\x7F]"
+
+
 def shape_sql(quoted: str) -> str:
     """SQL that generalizes a value to its shape.
 
-    `LN40718236` becomes `AA99999999`, `Salt Lake City` becomes `A+a+ Aa+ Aa+`... Runs of
+    `LN40718236` becomes `AA99999999`, `Salt Lake City` becomes `Aa+ Aa+ Aa+`... Runs of
     three or more letters of one case collapse to `A+` / `a+`; digits keep their exact
     count because the length of a number usually matters. A literal `+` or `\\` in the data
     is escaped first so the collapsed-run marker stays unambiguous.
+
+    Every character outside ASCII becomes `U`. Shapes are the one thing the model is shown
+    for a masked column, so no letter of a value may survive in one: without this step an
+    accented, Cyrillic, or CJK name would pass through unchanged. It runs after the ASCII
+    letters are replaced, so a `U` in a shape can only be this marker.
     """
     expr = rf"replace(replace({quoted}, '\', '\\'), '+', '\+')"
     for pattern, replacement in (
         ("[A-Z]", "A"),
         ("[a-z]", "a"),
         ("[0-9]", "9"),
+        (NON_ASCII, "U"),
         ("A{3,}", "A+"),
         ("a{3,}", "a+"),
+        ("U{3,}", "U+"),
     ):
         expr = f"regexp_replace({expr}, '{pattern}', '{replacement}', 'g')"
     return expr
 
 
 _REGEX_META = set(".^$*+?()[]{}|\\")
-_CLASSES = {"A": "[A-Z]", "a": "[a-z]", "9": "[0-9]"}
+_CLASSES = {"A": "[A-Z]", "a": "[a-z]", "9": "[0-9]", "U": NON_ASCII}
 
 
 def shape_to_regex(shape: str) -> str:

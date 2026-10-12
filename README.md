@@ -119,6 +119,8 @@ cd server && uv sync && uv run uvicorn app.main:app --port 8130
 NEXT_PUBLIC_API_URL=http://localhost:8130 pnpm dev -p 3130
 ```
 
+To host the API, [`render.yaml`](render.yaml) is a Render blueprint for it. Its install and start commands are checked locally; it has not been deployed yet. Set `ALLOWED_ORIGINS` to the site's URL, set `NEXT_PUBLIC_API_URL` on the site to the service's URL, and never give the service an Anthropic key of its own.
+
 ## Tests & quality
 
 ```bash

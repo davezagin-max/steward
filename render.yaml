@@ -1,0 +1,22 @@
+# Render blueprint for the optional Steward API (FastAPI + DuckDB).
+#
+# The site works without this service: demo mode is bundled into the Next.js
+# app. Deploy it only to enable live runs on a visitor's own key and CSV
+# uploads, then set NEXT_PUBLIC_API_URL on the site to this service's URL.
+#
+# Never set ALLOW_SERVER_KEY or ANTHROPIC_API_KEY here. Visitors bring their
+# own key; a server key would let anyone spend it.
+services:
+  - type: web
+    name: steward-api
+    runtime: python
+    plan: free
+    rootDir: server
+    buildCommand: pip install uv && uv sync --frozen --no-dev
+    startCommand: uv run --no-dev uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.3
+      - key: ALLOWED_ORIGINS
+        value: https://steward.vercel.app

@@ -25,12 +25,6 @@ function setTheme(theme: Theme): void {
   listeners.forEach((listener) => listener());
 }
 
-/**
- * Runs before first paint (see app/layout.tsx) so the saved or system theme
- * applies without a flash.
- */
-export const THEME_INIT_SCRIPT = `(function(){try{var t=localStorage.getItem("theme");if(t!=="light"&&t!=="dark"){t=matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}document.documentElement.dataset.theme=t}catch(e){}})()`;
-
 export function ThemeToggle({ className = "" }: { className?: string }) {
   const theme = useSyncExternalStore<Theme>(subscribe, currentTheme, () => "light");
   const next: Theme = theme === "dark" ? "light" : "dark";

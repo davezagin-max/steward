@@ -21,6 +21,8 @@ export interface Workspace {
   reruns: Record<string, RerunState>;
   openColumn: (name: string) => void;
   openRelationships: () => void;
+  /** The suggestion "Start reviewing" is pointing at, if any. It is highlighted on screen. */
+  spotlight: string | null;
 }
 
 const WorkspaceContext = createContext<Workspace | null>(null);

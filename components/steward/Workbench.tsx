@@ -1,22 +1,35 @@
 "use client";
 
-import { useCallback, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { CostMeter } from "@/components/kit/CostMeter";
 import { useKey } from "@/components/kit/KeyProvider";
 import { ThemeToggle } from "@/components/kit/ThemeToggle";
 import { MAX_UPLOAD_BYTES, apiBase, profileSource, runRules, streamAssessment, type DataSource } from "@/lib/steward/api";
 import { DEMO_BUNDLE } from "@/lib/steward/bundle";
+import { resultFor } from "@/lib/steward/exports";
 import { formatInt } from "@/lib/steward/format";
-import { buildItems, countItems, highConfidencePending, type ReviewAction, type ReviewItem } from "@/lib/steward/review";
+import {
+  buildItems,
+  countItems,
+  decisionOf,
+  highConfidencePending,
+  nextPending,
+  reviewOrder,
+  type ReviewAction,
+  type ReviewItem,
+  type ReviewState,
+} from "@/lib/steward/review";
 import { createReviewStore, reviewFingerprint, type ReviewStore } from "@/lib/steward/review-store";
 import { ruleColumns, validateRule } from "@/lib/steward/rules";
 import type { AssessEvent, AssessmentRun, Bundle, Rule, RuleResult } from "@/lib/steward/types";
 import { AuditDrawer } from "./AuditDrawer";
+import { Banner } from "./Banner";
 import { ColumnDetail } from "./ColumnDetail";
 import { ColumnRail, type Selection } from "./ColumnRail";
 import { WorkspaceProvider, type RerunState, type Workspace } from "./context";
 import { ExportPanel } from "./ExportPanel";
 import { LivePanel, type LiveState } from "./LivePanel";
+import { Overview } from "./Overview";
 import { Relationships } from "./Relationships";
 import { ReviewQueue } from "./ReviewQueue";
 import { SampleKey } from "./SampleKey";
@@ -84,6 +97,10 @@ export function Workbench() {
   const [auditOpen, setAuditOpen] = useState(false);
   const [liveOpen, setLiveOpen] = useState(false);
   const [keyOpen, setKeyOpen] = useState(false);
+  /** The suggestion "Start reviewing" points at, and what happened to the one before it. */
+  const [spotlight, setSpotlight] = useState<string | null>(null);
+  const [note, setNote] = useState<string | null>(null);
+  const [scrollTick, setScrollTick] = useState(0);
   /** The uploaded file's text. Kept in memory only, so edited rules can be re-run on it. */
   const upload = useRef<{ name: string; csv: string } | null>(null);
   const abort = useRef<AbortController | null>(null);
@@ -94,14 +111,70 @@ export function Workbench() {
   const results = useMemo(() => ({ ...bundle.results, ...extraResults }), [bundle.results, extraResults]);
   const isSample = bundle.dataset.id === DEMO_BUNDLE.dataset.id;
 
-  const act = useCallback((action: ReviewAction) => store.dispatch(action, items), [store, items]);
+  /** The workbench's on-screen order, so "next" means the next one down the page. */
+  const orderFor = useCallback(
+    (state: ReviewState) =>
+      reviewOrder(items, columns, (item) => {
+        const value = decisionOf(state, item).value;
+        return value.kind === "rule" ? (resultFor(results, item.id, value.rule)?.failed ?? 0) : 0;
+      }),
+    [items, columns, results],
+  );
+
+  /** Opens the view that shows an item, highlights it, and brings it on screen. */
+  const spotlightOn = useCallback((item: ReviewItem) => {
+    setSelection(item.column ? { type: "column", name: item.column } : { type: "relationships" });
+    setView("columns");
+    setSpotlight(item.id);
+    setScrollTick((tick) => tick + 1);
+  }, []);
+
+  const act = useCallback(
+    (action: ReviewAction) => {
+      store.dispatch(action, items);
+      if (!spotlight) return;
+      const touched =
+        action.type === "edit"
+          ? action.id === spotlight
+          : (action.type === "approve" || action.type === "reject") && action.ids.includes(spotlight);
+      if (!touched) return;
+      // The highlighted suggestion was just decided: move on to the next one.
+      const state = store.getSnapshot();
+      const item = items.find((entry) => entry.id === spotlight);
+      const status = item ? decisionOf(state, item).status : "pending";
+      if (status === "pending") return;
+      setNote(status === "approved" ? "Approved." : "Rejected.");
+      const next = nextPending(orderFor(state), state, spotlight);
+      if (next) spotlightOn(next);
+      else setSpotlight(null);
+    },
+    [store, items, spotlight, orderFor, spotlightOn],
+  );
+
+  function startReview(skipCurrent: boolean) {
+    const next = nextPending(orderFor(review), review, skipCurrent ? spotlight : null);
+    setNote(null);
+    if (next) spotlightOn(next);
+  }
+
+  // Bring the highlighted suggestion on screen and put the keyboard on its Approve button.
+  useEffect(() => {
+    if (!spotlight) return;
+    const target = document.querySelector<HTMLElement>(`[data-review-item="${CSS.escape(spotlight)}"]`);
+    if (!target) return;
+    const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    target.scrollIntoView({ block: "nearest", behavior: still ? "auto" : "smooth" });
+    target.querySelector<HTMLElement>("[data-approve]")?.focus({ preventScroll: true });
+  }, [spotlight, scrollTick]);
 
   const openColumn = useCallback((name: string) => {
+    setSpotlight(null);
     setSelection({ type: "column", name });
     setView("columns");
     window.scrollTo({ top: 0 });
   }, []);
   const openRelationships = useCallback(() => {
+    setSpotlight(null);
     setSelection({ type: "relationships" });
     setView("columns");
     window.scrollTo({ top: 0 });
@@ -132,6 +205,8 @@ export function Workbench() {
   );
 
   function show(next: Bundle, persist: boolean) {
+    setSpotlight(null);
+    setNote(null);
     setBundle(next);
     setStore(storeFor(next, persist));
     setExtraResults({});
@@ -179,6 +254,8 @@ export function Workbench() {
     // including the review of it.
     const before = { bundle, store, extraResults, reruns };
     const working: Bundle = { ...bundle, meta: null, run: EMPTY_RUN, results: {} };
+    setSpotlight(null);
+    setNote(null);
     setBundle(working);
     setStore(storeFor(working, false));
     setExtraResults({});
@@ -245,6 +322,7 @@ export function Workbench() {
     reruns,
     openColumn,
     openRelationships,
+    spotlight,
   };
   const tabs: [View, string, number | null][] = [
     ["columns", "Columns", null],
@@ -252,8 +330,14 @@ export function Workbench() {
     ["exports", "Exports", null],
   ];
 
+  const spotlit = spotlight ? items.find((item) => item.id === spotlight) : undefined;
+  const datasetLine = isSample
+    ? `The sample below is ${formatInt(bundle.profile.row_count)} rows of fake mortgage loans in ${bundle.profile.column_count} columns, with ${bundle.planted.length} data problems planted for the checks to find.`
+    : `Your file: ${bundle.dataset.name}, ${formatInt(bundle.profile.row_count)} rows in ${bundle.profile.column_count} columns.`;
+
   return (
     <WorkspaceProvider value={workspace}>
+      <Banner placeholder={DEMO_BUNDLE.meta?.placeholder ?? false} onRunLive={() => setLiveOpen(true)} />
       <header className="border-b border-border bg-bg">
         <div className="mx-auto flex w-full max-w-[1480px] flex-wrap items-center gap-x-4 gap-y-2 px-4 py-2.5">
           <div className="flex items-center gap-2.5">
@@ -261,7 +345,7 @@ export function Workbench() {
               <Icon name="shield" className="size-4" />
             </span>
             <h1 className="text-[15px] font-semibold tracking-tight">Steward</h1>
-            <span className="hidden text-xs text-muted xl:inline">AI data steward, with a person approving every suggestion</span>
+            <span className="hidden text-xs text-muted xl:inline">AI data steward</span>
           </div>
           <nav aria-label="Views" className="order-last flex w-full gap-1 md:order-none md:ml-2 md:w-auto">
             {tabs.map(([value, label, badge]) => (
@@ -269,7 +353,10 @@ export function Workbench() {
                 key={value}
                 type="button"
                 aria-current={view === value ? "page" : undefined}
-                onClick={() => setView(value)}
+                onClick={() => {
+                  setSpotlight(null);
+                  setView(value);
+                }}
                 className="inline-flex flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-md px-3 py-1.5 text-[13px] text-muted hover:bg-surface hover:text-fg aria-[current]:bg-accent-soft aria-[current]:font-medium aria-[current]:text-accent-ink md:flex-none"
               >
                 {label}
@@ -284,7 +371,7 @@ export function Workbench() {
           <div className="ml-auto flex items-center gap-1.5">
             <Button onClick={() => setAuditOpen(true)}>
               <Icon name="history" />
-              <span className="hidden sm:inline">Audit log</span>
+              <span className="sr-only sm:not-sr-only">Audit log</span>
               <span className="tabular-nums text-muted">{review.audit.length}</span>
             </Button>
             <Button onClick={() => setLiveOpen(true)}>
@@ -298,6 +385,16 @@ export function Workbench() {
       </header>
 
       <main id="main" className="mx-auto flex w-full max-w-[1480px] flex-1 flex-col gap-3 px-3 py-3 sm:px-4">
+        <Overview
+          dataset={datasetLine}
+          counts={counts}
+          current={spotlit ? { item: spotlit, value: decisionOf(review, spotlit).value } : null}
+          note={note}
+          onStart={() => startReview(false)}
+          onSkip={() => startReview(true)}
+          onSeeContract={() => setView("exports")}
+          onRunAssessment={() => setLiveOpen(true)}
+        />
         <section
           aria-label="Dataset and review progress"
           className="flex flex-wrap items-center gap-x-6 gap-y-3 rounded-lg border border-border bg-bg px-4 py-3"
@@ -330,7 +427,8 @@ export function Workbench() {
                   <span className="font-medium text-fg">{counts.rejected}</span> rejected ·{" "}
                   <span className="font-medium text-fg">{counts.pending}</span> of {counts.total} suggestions waiting for review
                 </p>
-                {bundle.meta && <CostMeter meta={bundle.meta} className="!text-[11px]" />}
+                {/* Tokens and cost mean something only for a real run; the banner covers the sample. */}
+                {bundle.meta && !bundle.meta.placeholder && <CostMeter meta={bundle.meta} className="!text-[11px]" />}
               </div>
             </div>
           ) : (
@@ -345,21 +443,15 @@ export function Workbench() {
               </span>
             )}
             {confident.length > 0 && (
-              <Button variant="primary" onClick={() => act({ type: "approve", ids: confident })}>
+              <Button onClick={() => act({ type: "approve", ids: confident })} title="Approve every pending suggestion Claude marked as high confidence">
                 <Icon name="check" />
                 Approve {confident.length} high-confidence
               </Button>
             )}
-            {counts.approved > 0 && view !== "exports" && (
-              <Button onClick={() => setView("exports")}>
+            {counts.approved > 0 && counts.pending > 0 && view !== "exports" && (
+              <Button variant="ghost" onClick={() => setView("exports")}>
                 See the data contract
                 <Icon name="chevron" />
-              </Button>
-            )}
-            {items.length === 0 && (
-              <Button variant="primary" onClick={() => setLiveOpen(true)}>
-                <Icon name="play" />
-                Run the assessment
               </Button>
             )}
           </div>
@@ -370,6 +462,7 @@ export function Workbench() {
             <ColumnRail
               selection={selection}
               onSelect={(next) => {
+                setSpotlight(null);
                 setSelection(next);
                 window.scrollTo({ top: 0 });
               }}

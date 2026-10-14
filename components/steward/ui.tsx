@@ -95,18 +95,21 @@ export function ConfidenceChip({ confidence }: { confidence: Confidence }) {
   );
 }
 
+/** Severity in plain words. The stored value stays "error" or "warning" (the exports use it). */
 export function SeverityChip({ severity }: { severity: Severity }) {
   return (
-    <Chip tone={severity === "error" ? "danger" : "warn"} title={severity === "error" ? "Blocks the record" : "Monitor only"}>
-      {severity}
+    <Chip title={severity === "error" ? "Severity: error. A failing row is blocked." : "Severity: warning. Failing rows are only reported."}>
+      {severity === "error" ? "blocking" : "warning"}
     </Chip>
   );
 }
 
-type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
+type ButtonVariant = "primary" | "soft" | "secondary" | "ghost" | "danger";
 
 const BUTTONS: Record<ButtonVariant, string> = {
   primary: "bg-accent text-accent-fg border-transparent hover:opacity-90",
+  /** A positive action that should not compete with the one primary button on screen. */
+  soft: "bg-accent-soft text-accent-ink border-transparent hover:bg-accent hover:text-accent-fg",
   secondary: "bg-bg text-fg border-border-strong hover:bg-surface",
   ghost: "bg-transparent text-muted border-transparent hover:bg-surface hover:text-fg",
   danger: "bg-bg text-danger border-border-strong hover:bg-danger-soft",
@@ -118,11 +121,12 @@ export function Button({
   className = "",
   type = "button",
   ...props
-}: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: ButtonVariant; size?: "sm" | "md" }) {
+}: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: ButtonVariant; size?: "sm" | "md" | "lg" }) {
+  const sizes = { sm: "h-7 px-2 text-xs", md: "h-8 px-3 text-[13px]", lg: "h-10 px-4 text-[14px]" };
   return (
     <button
       type={type}
-      className={`inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md border font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${size === "sm" ? "h-7 px-2 text-xs" : "h-8 px-3 text-[13px]"} ${BUTTONS[variant]} ${className}`}
+      className={`inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md border font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${sizes[size]} ${BUTTONS[variant]} ${className}`}
       {...props}
     />
   );
@@ -199,7 +203,10 @@ export type IconName =
   | "link"
   | "play"
   | "undo"
-  | "info";
+  | "info"
+  | "chart"
+  | "sparkle"
+  | "person";
 
 const PATHS: Record<IconName, ReactNode> = {
   check: <path d="M3.5 8.5l3 3 6-7" />,
@@ -219,6 +226,9 @@ const PATHS: Record<IconName, ReactNode> = {
   play: <path d="M5 3.5l7 4.5-7 4.5z" />,
   undo: <path d="M5.5 4L3 6.5 5.5 9M3 6.5h6a3.5 3.5 0 0 1 0 7H7" />,
   info: <path d="M8 14A6 6 0 1 0 8 2a6 6 0 0 0 0 12zM8 7.5v3.5M8 5v.3" />,
+  chart: <path d="M2.5 13.5h11M4.5 11V8M8 11V3.5M11.5 11V6" />,
+  sparkle: <path d="M7 2.5l1.2 3.3 3.3 1.2-3.3 1.2L7 11.5 5.8 8.2 2.5 7l3.3-1.2zM12 10.5v3M10.5 12h3" />,
+  person: <path d="M6.5 7.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5zM2 13.5c.5-2.2 2.2-3.5 4.5-3.5M9.5 11.5l1.5 1.5 3-3" />,
 };
 
 export function Icon({ name, className = "size-3.5" }: { name: IconName; className?: string }) {

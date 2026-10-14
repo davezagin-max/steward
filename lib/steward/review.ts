@@ -319,6 +319,42 @@ export function highConfidencePending(state: ReviewState, items: ReviewItem[]): 
     .map((item) => item.id);
 }
 
+const KIND_RANK: Record<ItemKind, number> = { definition: 0, classification: 1, rule: 2, relationship: 3 };
+
+/**
+ * Items in the order the workbench shows them: column by column in file order (the
+ * description, the sensitivity label, then the rules with the most failing rows first),
+ * then each cross-column relationship followed by its own rules. "Start reviewing" walks
+ * this order.
+ */
+export function reviewOrder(items: ReviewItem[], columns: string[], failedOf: (item: ReviewItem) => number): ReviewItem[] {
+  const ordered: ReviewItem[] = [];
+  for (const name of columns) {
+    const own = items.filter((item) => item.column === name);
+    own.sort((a, b) => KIND_RANK[a.kind] - KIND_RANK[b.kind] || (a.kind === "rule" ? failedOf(b) - failedOf(a) : 0));
+    ordered.push(...own);
+  }
+  for (const relationship of items.filter((item) => item.kind === "relationship")) {
+    ordered.push(relationship);
+    ordered.push(...items.filter((item) => item.kind === "rule" && item.column === null && item.relationshipId === relationship.relationshipId));
+  }
+  const placed = new Set(ordered.map((item) => item.id));
+  return [...ordered, ...items.filter((item) => !placed.has(item.id))];
+}
+
+/**
+ * The first pending item after `afterId` in `order`, wrapping around to the start. With
+ * no `afterId` (or an unknown one) it is the first pending item. Null when nothing is pending.
+ */
+export function nextPending(order: ReviewItem[], state: ReviewState, afterId: string | null): ReviewItem | null {
+  const start = afterId === null ? -1 : order.findIndex((item) => item.id === afterId);
+  for (let step = 1; step <= order.length; step++) {
+    const item = order[(start + step) % order.length];
+    if (decisionOf(state, item).status === "pending") return item;
+  }
+  return null;
+}
+
 /**
  * Rebuilds a saved review from untrusted storage. Anything that does not match the
  * current items (unknown ids, wrong value kinds, bad statuses) is dropped, and the saved

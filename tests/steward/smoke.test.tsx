@@ -36,20 +36,27 @@ describe("demo mode", () => {
       </KeyProvider>,
     );
     const text = html.replace(/<!-- -->/g, "");
-    expect(text).toContain("Demo mode");
+    // What it is, what the sample is, and the one action to take, before anything else.
+    expect(text).toContain("A person approves every suggestion.");
+    expect(text).toContain(`${bundle.planted.length} data problems planted`);
+    expect(text).toMatch(/<button[^>]*>(?:<svg.*?<\/svg>)?Start reviewing<\/button>/);
+    expect(text).toContain("Code profiles the data");
     expect(text).toContain(bundle.dataset.title);
     expect(text).toContain("5,014 rows");
     expect(text).toContain(`${items.length} suggestions waiting for review`);
     // The first column is open with its profile, its assessment, and its rules.
     const first = bundle.run!.assessments[0];
     expect(text).toMatch(new RegExp(`<h2[^>]*>${first.column}</h2>`));
-    expect(text).toContain("computed by DuckDB, not by the model");
+    expect(text).toContain("measured by code (DuckDB), not by the AI");
     expect(text).toContain(first.business_definition.replaceAll("'", "&#x27;"));
     expect(text).toContain(`Proposed rules for this column (${first.rules.length})`);
     expect(text).toMatch(/Approve \d+ high-confidence/);
     // Every column is in the rail, and nothing claims to be a recorded run while it is a placeholder.
     for (const name of columns) expect(text).toContain(name);
-    if (bundle.meta?.placeholder) expect(text).toContain("Sample (not a real run)");
+    // The banner says plainly whether the suggestions are hand-written or a recorded run.
+    expect(text).toContain("Demo:");
+    if (bundle.meta?.placeholder) expect(text).toContain("pre-written examples");
+    else expect(text).toContain("replayed from a recorded run");
     expect(text).toContain("Built with Claude Code and Claude Opus 5.5.");
     expect(fetchSpy).not.toHaveBeenCalled();
   });

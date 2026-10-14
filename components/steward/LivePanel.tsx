@@ -85,10 +85,11 @@ export function LivePanel({ open, onClose, apiUrl, bundle, isSample, state, onUp
         </header>
 
         {!apiUrl && (
-          <Notice tone="warn" title="This deployment runs without the Steward API">
+          <Notice tone="warn" title="Uploads and live runs need the Steward API, which is not connected here">
             <p>
-              Everything on the sample still works: the profile, the review queue, the audit log, and all three exports. To upload a
-              file or run Claude live, start the API and point the app at it:
+              The Steward API is the small Python server (FastAPI and DuckDB) that reads a CSV and calls Claude. This copy of the
+              app runs without it, so only the bundled sample is available, and all of it works: the profile, the review queue,
+              the audit log, and the three exports. To upload a file or run Claude live, start the API and point the app at it:
             </p>
             <pre className="mt-2 overflow-x-auto rounded-md border border-border bg-bg p-2.5 font-mono text-[11.5px] leading-relaxed text-fg">
               {"cd server && uv run uvicorn app.main:app --port 8130\nNEXT_PUBLIC_API_URL=http://localhost:8130 pnpm dev -p 3130"}

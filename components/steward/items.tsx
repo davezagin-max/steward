@@ -20,6 +20,22 @@ import { Button, Chip, Code, Icon, PassFailBar, RawValue, SensitivityChip, Sever
 const FIELD =
   "w-full rounded-md border border-border-strong bg-bg px-2 py-1.5 text-[13px] text-fg placeholder:text-muted";
 
+/**
+ * Marks a suggestion so "Start reviewing" can find it, and highlights it while it is the
+ * one being reviewed.
+ */
+export function spotlightProps(spotlight: string | null, id: string): { "data-review-item": string; className: string } {
+  return {
+    "data-review-item": id,
+    className: `scroll-my-6 transition-shadow ${spotlight === id ? "bg-accent-soft/40 ring-2 ring-inset ring-accent" : ""}`,
+  };
+}
+
+/** "28 rows fail", "1 row fails". */
+export function failingRows(count: number): string {
+  return `${formatInt(count)} ${count === 1 ? "row fails" : "rows fail"}`;
+}
+
 /** Approve / Edit / Reject while pending; Reopen once decided. */
 export function ItemActions({
   item,
@@ -30,13 +46,18 @@ export function ItemActions({
   onEdit?: () => void;
   className?: string;
 }) {
-  const { review, act } = useWorkspace();
+  const { review, act, spotlight } = useWorkspace();
   const { status } = decisionOf(review, item);
   return (
     <div className={`flex shrink-0 flex-wrap items-center gap-1.5 ${className}`}>
       {status === "pending" ? (
         <>
-          <Button variant="primary" size="sm" onClick={() => act({ type: "approve", ids: [item.id] })}>
+          <Button
+            variant={spotlight === item.id ? "primary" : "soft"}
+            size="sm"
+            data-approve=""
+            onClick={() => act({ type: "approve", ids: [item.id] })}
+          >
             <Icon name="check" className="size-3" />
             Approve
           </Button>
@@ -98,7 +119,7 @@ function EditFooter({
 
 /** The business definition of a column, with inline editing. */
 export function DefinitionBlock({ item }: { item: ReviewItem }) {
-  const { review, act } = useWorkspace();
+  const { review, act, spotlight } = useWorkspace();
   const decision = decisionOf(review, item);
   const text = decision.value.kind === "definition" ? decision.value.text : "";
   const [draft, setDraft] = useState<string | null>(null);
@@ -114,14 +135,15 @@ export function DefinitionBlock({ item }: { item: ReviewItem }) {
     setError(null);
   }
 
+  const marked = spotlightProps(spotlight, item.id);
   return (
-    <div className="flex flex-col gap-2 px-4 py-3">
+    <div {...marked} className={`flex flex-col gap-2 px-4 py-3 ${marked.className}`}>
       <div className="flex flex-wrap items-center justify-between gap-2">
         {draft === null ? (
-          <h4 className="text-[11px] font-semibold uppercase tracking-wide text-muted">Business definition</h4>
+          <h4 className="text-[11px] font-semibold uppercase tracking-wide text-muted">Description</h4>
         ) : (
           <label htmlFor={inputId} className="text-[11px] font-semibold uppercase tracking-wide text-muted">
-            Business definition
+            Description
           </label>
         )}
         <StatusChip status={decision.status} edited={decision.edited} />
@@ -152,7 +174,7 @@ export function DefinitionBlock({ item }: { item: ReviewItem }) {
 
 /** The sensitivity class of a column, with inline editing. */
 export function ClassificationBlock({ item }: { item: ReviewItem }) {
-  const { review, act } = useWorkspace();
+  const { review, act, spotlight } = useWorkspace();
   const decision = decisionOf(review, item);
   const current = decision.value.kind === "classification" ? decision.value.sensitivity : "Internal";
   const [draft, setDraft] = useState<Sensitivity | null>(null);
@@ -163,14 +185,15 @@ export function ClassificationBlock({ item }: { item: ReviewItem }) {
     setDraft(null);
   }
 
+  const marked = spotlightProps(spotlight, item.id);
   return (
-    <div className="flex flex-col gap-2 px-4 py-3">
+    <div {...marked} className={`flex flex-col gap-2 px-4 py-3 ${marked.className}`}>
       <div className="flex flex-wrap items-center justify-between gap-2">
         {draft === null ? (
-          <h4 className="text-[11px] font-semibold uppercase tracking-wide text-muted">Sensitivity class</h4>
+          <h4 className="text-[11px] font-semibold uppercase tracking-wide text-muted">Sensitivity label</h4>
         ) : (
           <label htmlFor={inputId} className="text-[11px] font-semibold uppercase tracking-wide text-muted">
-            Sensitivity class
+            Sensitivity label
           </label>
         )}
         <StatusChip status={decision.status} edited={decision.edited} />
@@ -467,10 +490,10 @@ function RuleOutcome({ item, rule, result }: { item: ReviewItem; rule: Rule; res
       <div className="flex flex-col gap-1">
         <p className="flex items-baseline justify-between gap-2 text-xs tabular-nums">
           <span className={result.failed ? "font-semibold text-danger" : "font-medium text-success"}>
-            {result.failed ? `${formatInt(result.failed)} fail` : "All pass"}
+            {result.failed ? failingRows(result.failed) : "All pass"}
           </span>
           <span className="text-muted">
-            {result.pass_rate === null ? "no rows to check" : `${formatPct(result.pass_rate, 2)} of ${formatInt(result.evaluated)}`}
+            {result.pass_rate === null ? "no rows to check" : `${formatPct(result.pass_rate, 2)} of ${formatInt(result.evaluated)} pass`}
           </span>
         </p>
         <PassFailBar passed={result.passed} failed={result.failed} />
@@ -503,15 +526,16 @@ function RuleOutcome({ item, rule, result }: { item: ReviewItem; rule: Rule; res
 
 /** One proposed rule: what it checks, how the data did, and the reviewer's decision. */
 export function RuleCard({ item, showSource = false }: { item: ReviewItem; showSource?: boolean }) {
-  const { review, results, bundle } = useWorkspace();
+  const { review, results, bundle, spotlight } = useWorkspace();
   const [editing, setEditing] = useState(false);
   const decision = decisionOf(review, item);
   if (decision.value.kind !== "rule") return null;
   const { rule, severity } = decision.value;
   const result = resultFor(results, item.id, rule);
+  const marked = spotlightProps(spotlight, item.id);
 
   return (
-    <li className="px-4 py-3.5">
+    <li {...marked} className={`px-4 py-3.5 ${marked.className}`}>
       <div className="flex flex-wrap items-start gap-x-4 gap-y-2.5">
         <div className="min-w-0 flex-1 basis-72">
           <div className="flex flex-wrap items-center gap-1.5">

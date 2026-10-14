@@ -87,8 +87,8 @@ try {
   const edited = page.locator("li", { hasText: "fico_score is between 620 and 850" }).first();
   await edited.getByText("Not run since the edit").waitFor();
   await edited.getByRole("button", { name: "Run rule" }).click();
-  await edited.getByText(/\d+ fail/).waitFor({ timeout: 15_000 });
-  const failed = Number((await edited.getByText(/\d+ fail/).innerText()).replace(/\D/g, ""));
+  await edited.getByText(/\d[\d,]* rows? fails?/).waitFor({ timeout: 15_000 });
+  const failed = Number((await edited.getByText(/\d[\d,]* rows? fails?/).innerText()).replace(/\D/g, ""));
   assert.ok(failed > 9, `a tighter range should fail more than the original 9 rows, got ${failed}`);
   step(`edited rule re-run by the engine (${failed} rows fail)`);
 

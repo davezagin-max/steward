@@ -1,12 +1,16 @@
 import { describe, expect, it } from "vitest";
+import { resultFor } from "@/lib/steward/exports";
 import {
   buildItems,
   countItems,
   highConfidencePending,
   initialState,
+  nextPending,
   reduce,
   restoreState,
+  reviewOrder,
   type ItemValue,
+  type ReviewItem,
 } from "@/lib/steward/review";
 import { ruleColumns, validateRule } from "@/lib/steward/rules";
 import type { Rule } from "@/lib/steward/types";
@@ -168,4 +172,56 @@ describe("restoreState", () => {
 it("ruleColumns is what links a rule to the columns it shows under", () => {
   const derived = items.find((item) => item.proposed.kind === "rule" && item.proposed.rule.type === "derived_ratio")!;
   expect(derived.columns).toEqual(ruleColumns((derived.proposed as { rule: Rule }).rule, bundle.catalog));
+});
+
+describe("reviewOrder and nextPending", () => {
+  const failedOf = (item: ReviewItem) =>
+    item.proposed.kind === "rule" ? (resultFor(bundle.results, item.id, item.proposed.rule)?.failed ?? 0) : 0;
+  const order = reviewOrder(items, columns, failedOf);
+
+  it("lists every item once, column by column as the workbench shows them", () => {
+    expect(order).toHaveLength(items.length);
+    expect(new Set(order.map((item) => item.id)).size).toBe(items.length);
+    // The first column: its description, its sensitivity label, then its rules, worst first.
+    const first = columns[0];
+    const own = order.filter((item) => item.column === first);
+    expect(order.slice(0, own.length)).toEqual(own);
+    expect(own.slice(0, 2).map((item) => item.id)).toEqual([`def:${first}`, `cls:${first}`]);
+    const fails = own.slice(2).map(failedOf);
+    expect(fails[0]).toBe(28);
+    expect(fails).toEqual([...fails].sort((a, b) => b - a));
+    // Columns keep file order; cross-column items come last, each relationship before its rules.
+    const columnOrder = [...new Set(order.filter((item) => item.column !== null).map((item) => item.column))];
+    expect(columnOrder).toEqual(columns.filter((name) => items.some((item) => item.column === name)));
+    const firstCross = order.findIndex((item) => item.column === null);
+    expect(order.slice(firstCross).every((item) => item.column === null)).toBe(true);
+    expect(order[firstCross].kind).toBe("relationship");
+    for (const [index, item] of order.entries()) {
+      if (item.kind !== "rule" || item.column !== null) continue;
+      const owner = order.findIndex((entry) => entry.kind === "relationship" && entry.relationshipId === item.relationshipId);
+      expect(owner).toBeGreaterThanOrEqual(firstCross);
+      expect(owner).toBeLessThan(index);
+    }
+  });
+
+  it("walks the pending items in that order, skipping decided ones and wrapping around", () => {
+    const start = initialState(items);
+    expect(nextPending(order, start, null)?.id).toBe(order[0].id);
+    expect(nextPending(order, start, "not-an-item")?.id).toBe(order[0].id);
+    // Skipping moves on without deciding anything.
+    expect(nextPending(order, start, order[0].id)?.id).toBe(order[1].id);
+    // Decided items are passed over.
+    const decided = apply([
+      { type: "approve", ids: [order[1].id] },
+      { type: "reject", ids: [order[2].id] },
+    ]);
+    expect(nextPending(order, decided, order[0].id)?.id).toBe(order[3].id);
+    // From the last item it wraps to the first pending one.
+    expect(nextPending(order, decided, order[order.length - 1].id)?.id).toBe(order[0].id);
+    // With one item left it returns that item even when asked to skip it.
+    const allButOne = apply([{ type: "approve", ids: order.slice(1).map((item) => item.id) }]);
+    expect(nextPending(order, allButOne, order[0].id)?.id).toBe(order[0].id);
+    const done = apply([{ type: "approve", ids: order.map((item) => item.id) }]);
+    expect(nextPending(order, done, null)).toBeNull();
+  });
 });

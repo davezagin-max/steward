@@ -2,7 +2,6 @@
 
 import { useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { resultFor } from "@/lib/steward/exports";
-import { formatInt } from "@/lib/steward/format";
 import {
   countItems,
   decisionOf,
@@ -15,6 +14,7 @@ import {
 import { describeRule } from "@/lib/steward/rules";
 import type { Confidence } from "@/lib/steward/types";
 import { useWorkspace } from "./context";
+import { failingRows } from "./items";
 import { Button, Chip, Code, ConfidenceChip, Notice, SensitivityChip, SeverityChip, StatusChip } from "./ui";
 
 const KIND_LABEL: Record<ItemKind, string> = {
@@ -60,7 +60,7 @@ function Summary({ item }: { item: ReviewItem }) {
       <SeverityChip severity={value.severity} />
       {result ? (
         result.failed ? (
-          <span className="text-xs font-semibold tabular-nums text-danger">{formatInt(result.failed)} fail</span>
+          <span className="text-xs font-semibold tabular-nums text-danger">{failingRows(result.failed)}</span>
         ) : (
           <span className="text-xs text-success">all pass</span>
         )
@@ -289,7 +289,7 @@ export function ReviewQueue() {
                 <div className="col-start-2 flex flex-wrap items-center gap-1.5 md:col-start-auto">
                   {decision.status === "pending" ? (
                     <>
-                      <Button variant="primary" size="sm" onClick={() => act({ type: "approve", ids: [item.id] })}>
+                      <Button variant="soft" size="sm" onClick={() => act({ type: "approve", ids: [item.id] })}>
                         Approve
                       </Button>
                       <Button variant="danger" size="sm" onClick={() => act({ type: "reject", ids: [item.id] })}>

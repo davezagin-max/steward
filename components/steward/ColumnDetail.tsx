@@ -189,7 +189,7 @@ function ProfileCard({ column }: { column: ColumnProfile }) {
   const showValues = column.role === "category" && column.top_values.length > 0;
   const nonNull = column.row_count - column.null_count;
   return (
-    <Card title="Profile" aside={<span className="text-[11px] text-muted">computed by DuckDB, not by the model</span>}>
+    <Card title="Data profile" aside={<span className="text-[11px] text-muted">measured by code (DuckDB), not by the AI</span>}>
       <dl className="grid grid-cols-2 gap-px border-b border-border bg-border sm:grid-cols-4">
         <Stat
           label="Empty"
@@ -199,7 +199,7 @@ function ProfileCard({ column }: { column: ColumnProfile }) {
         />
         <Stat label="Distinct" value={formatInt(column.distinct_count)} note={`${formatPct(column.distinct_pct, 2)} of values`} />
         {column.inferred_type === "string" ? (
-          <Stat label="Shapes" value={formatInt(column.shape_count)} note={column.shape_count === 1 ? "one format" : "value formats"} />
+          <Stat label="Formats" value={formatInt(column.shape_count)} note={column.shape_count === 1 ? "every value alike" : "different formats"} />
         ) : (
           <Stat
             label={`Valid ${column.inferred_type}`}
@@ -235,7 +235,10 @@ function ProfileCard({ column }: { column: ColumnProfile }) {
         )}
         {showShapes && (
           <div className="flex flex-col gap-1.5">
-            <Eyebrow>Patterns</Eyebrow>
+            <div className="flex flex-wrap items-baseline gap-x-2">
+              <Eyebrow>Formats</Eyebrow>
+              <span className="text-[11px] text-muted">A = capital letter, a = lowercase, 9 = digit</span>
+            </div>
             <Shapes column={column} />
           </div>
         )}
@@ -348,7 +351,7 @@ export function ColumnDetail({ name }: { name: string }) {
         </div>
         <div className="flex flex-wrap items-center gap-1.5">
           {pending.length > 1 && (
-            <Button variant="primary" onClick={() => act({ type: "approve", ids: pending.map((item) => item.id) })}>
+            <Button onClick={() => act({ type: "approve", ids: pending.map((item) => item.id) })}>
               <Icon name="check" />
               Approve all {pending.length} for this column
             </Button>

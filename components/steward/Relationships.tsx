@@ -4,7 +4,7 @@ import { useId, useState } from "react";
 import { formatInt, formatPct } from "@/lib/steward/format";
 import { decisionOf, relationshipLabel, type ReviewItem } from "@/lib/steward/review";
 import { useWorkspace } from "./context";
-import { ItemActions, RejectedRules, RuleList } from "./items";
+import { ItemActions, RejectedRules, RuleList, spotlightProps } from "./items";
 import { Button, Card, Chip, ConfidenceChip, Eyebrow, Notice, StatusChip } from "./ui";
 
 function ColumnLinks({ names }: { names: string[] }) {
@@ -104,7 +104,7 @@ function Facts() {
 }
 
 function RelationshipCard({ item, rules }: { item: ReviewItem; rules: ReviewItem[] }) {
-  const { review, act, bundle } = useWorkspace();
+  const { review, act, bundle, spotlight } = useWorkspace();
   const decision = decisionOf(review, item);
   const description = decision.value.kind === "relationship" ? decision.value.description : "";
   const [draft, setDraft] = useState<string | null>(null);
@@ -118,9 +118,10 @@ function RelationshipCard({ item, rules }: { item: ReviewItem; rules: ReviewItem
     setDraft(null);
   }
 
+  const marked = spotlightProps(spotlight, item.id);
   return (
     <Card>
-      <div className="flex flex-col gap-2 px-4 py-3.5">
+      <div {...marked} className={`flex flex-col gap-2 rounded-t-lg px-4 py-3.5 ${marked.className}`}>
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
           <Chip tone="accent">{relationshipLabel(item.relationshipKind ?? "dependent_field")}</Chip>
           <ColumnLinks names={item.columns} />

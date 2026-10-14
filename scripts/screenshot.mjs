@@ -10,7 +10,7 @@
  *       { "name": "hero", "path": "/", "theme": "light", "viewport": "desktop",
  *         "actions": [{ "click": "text=Run" }, { "waitFor": "#result" }, { "wait": 400 }] }
  *     ],
- *     "gif": { "path": "/", "theme": "dark", "actions": [ ... ] }
+ *     "gif": { "path": "/", "theme": "dark", "colors": 64, "dither": "none", "actions": [ ... ] }
  *   }
  * Actions: click, fill ([selector, text]), press, hover, waitFor (selector), wait (ms), scroll (px).
  * "viewport" is "desktop", "mobile", or an object such as { "width": 1280, "height": 1000 }.
@@ -110,10 +110,13 @@ try {
     const video = await page.video().path();
     await context.close();
     const gif = path.join(out, "demo.gif");
+    // A flat UI needs few colors; "colors" and "dither" in screenshots.json keep the GIF small.
+    const colors = config.gif.colors ?? 128;
+    const dither = config.gif.dither ?? "bayer";
     try {
       execFileSync(
         "ffmpeg",
-        ["-y", "-i", video, "-vf", "fps=12,scale=800:-1:flags=lanczos,split[a][b];[a]palettegen=max_colors=128[p];[b][p]paletteuse=dither=bayer", gif],
+        ["-y", "-i", video, "-vf", `fps=12,scale=800:-1:flags=lanczos,split[a][b];[a]palettegen=max_colors=${colors}[p];[b][p]paletteuse=dither=${dither}`, gif],
         { stdio: "ignore" },
       );
       console.log(`wrote ${gif}`);

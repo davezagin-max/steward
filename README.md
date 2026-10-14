@@ -1,25 +1,43 @@
 # Steward
 
-> An AI data steward. Drop in a dataset and it profiles every column, drafts the catalog, classifies sensitive fields, proposes data-quality rules, and writes a data contract, with a person approving every suggestion.
+> Claude drafts the documentation and quality checks for a dataset, code measures and tests the data, and a person approves every suggestion before it counts.
 
 [![CI](https://github.com/davezagin-max/steward/actions/workflows/ci.yml/badge.svg)](https://github.com/davezagin-max/steward/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Live demo](https://img.shields.io/badge/demo-live-brightgreen.svg)](https://steward.vercel.app)
+[![Live demo: coming soon](https://img.shields.io/badge/live%20demo-coming%20soon-lightgrey.svg)](#run-locally)
 
-![Steward: a column's profile, Claude's suggestions, and a rule failing 15 rows](docs/hero.png)
+![Steward mid-review: the explanation at the top, two approved suggestions for loan_id, and a highlighted rule that 28 rows fail](docs/hero.png)
 
-## Try it in 10 seconds
+*The bundled sample mid-review. A reviewer has approved Claude's description and sensitivity label for `loan_id`; the highlighted rule, "loan_id is unique", fails on 28 duplicated rows, found by the rules engine.*
 
-**[Open the live demo](https://steward.vercel.app)**: no key, no sign-up. A synthetic mortgage loan tape (5,014 rows, 25 columns, 17 planted data problems) opens already profiled, with 116 suggestions waiting for review. Click **Approve 98 high-confidence**, then **See the data contract**. Open `interest_rate` to see a rule that fails 15 rows, with the rows.
+## What it does
 
-![Reviewing the sample: failing rows, bulk approval, the queue, and the exports](docs/demo.gif)
+- **Measures a dataset with code.** For every column of a CSV, Steward counts blanks, formats, ranges, and outliers, and finds keys and columns that depend on each other. Every measurement comes from SQL (DuckDB), none from the AI.
+- **Has Claude draft the paperwork.** For each column, Claude suggests a plain-English description, a sensitivity label (Public, Internal, Confidential, or Restricted: who may see it), and data-quality rules such as "loan_id is unique". Claude sees the measurements, never the rows.
+- **Keeps a person in charge.** Every suggestion waits for a reviewer to approve, edit, or reject it, and each decision goes into an audit log. Only approved items reach the exports: a data contract (the agreed rules for the dataset), a glossary, and a quality report.
+- **Tests the rules on the real data.** An engine runs each rule and shows the rows that fail. The sample is a fake mortgage loan table with 17 planted problems, and an answer key shows which ones the rules catch.
+
+## Try it
+
+The live demo is coming soon. This is the one-click path from the first screen:
+
+![The demo from the first screen: Start reviewing, approve two suggestions, open the 28 failing rows, approve the high-confidence suggestions in bulk, then read the data contract and the quality report](docs/demo.gif)
+
+To run it yourself (details in [Run locally](#run-locally)):
+
+```bash
+pnpm install
+pnpm dev -p 3130
+```
+
+Open http://localhost:3130. No key and no sign-up: the sample (5,014 rows, 25 columns) opens already measured, with 116 suggestions waiting. Click **Start reviewing** to go through them one at a time, or **Approve 98 high-confidence** and then open **Exports**. **17 planted problems** opens the answer key.
 
 Demo data in this commit is hand-written sample output; `pnpm record` replaces it with real Claude Opus 5.5 runs.
 
 What that means exactly:
 
 - **Computed for real:** every profile number and every pass/fail count. The DuckDB engine runs on the actual CSV, and the tests check its failing rows against the generator's list of planted problems, row for row.
-- **Hand-written for now:** the suggestion text (definitions, sensitivity classes, proposed rules, rationales). It is written in the exact shape the model's tool calls return and goes through the same validator. The app labels it "sample", never "recorded".
+- **Hand-written for now:** the suggestion text (descriptions, sensitivity labels, proposed rules, rationales). It is written in the exact shape the model's tool calls return and goes through the same validator. The app says so in its top banner and never calls it a recorded run.
 - **Not yet run against the real API:** the live Claude path. It is complete and covered by tests with a scripted client at unit, HTTP, and browser level, but no API key existed when this was built.
 
 The whole sample runs in the browser from a bundled JSON file. Uploading your own CSV and running Claude live need the Python API (see "Run locally").
@@ -38,7 +56,7 @@ The whole sample runs in the browser from a bundled JSON file. Uploading your ow
 | Audit log: who, what, when, before and after | Data contract YAML, built from approved items only |
 
 <p>
-  <img src="docs/mobile.png" alt="Steward on a phone: the sample, profiled" width="260" />
+  <img src="docs/mobile.png" alt="Steward on a phone: the explanation, the three steps, and the Start reviewing button" width="260" />
   <img src="docs/mobile-dark.png" alt="Steward on a phone in dark mode: the quality report" width="260" />
 </p>
 
@@ -129,13 +147,13 @@ cd server && uv run pytest -q                # profiler, rules engine, Claude pa
 pnpm e2e:live                                # the live path in a headless browser, no key needed
 ```
 
-251 tests: 153 pytest and 98 Vitest (4 more are live smoke tests that skip without a key).
+253 tests: 153 pytest and 100 Vitest (4 more are live smoke tests that skip without a key).
 
 - **Rules engine.** Every rule type on a table with known answers. Hostile column names and injection strings as values across all 11 types. Values never appear in compiled SQL. The engine's failing rows equal the generator's manifest, row for row, for all 17 planted problems.
 - **Profiler.** Type inference, leading-zero codes kept as text, quartiles and fences on known distributions, near keys, composite keys found and accidental ones not, dependencies with violation counts. For every reported shape, the regex beside it matches exactly the rows with that shape.
 - **What the model sees.** No SSN, email, address, or date of birth from the CSV appears in the prompt. No character of a masked value survives in its shape, including accented, Cyrillic, and CJK text.
 - **Claude passes** (scripted client): strict tools, effort per pass, one cache write and 25 cache reads, the retry paths, refusals, and stopping when the visitor cancels.
-- **Review and exports.** The reducer and audit log, restoring a saved review from untrusted storage, and the YAML emitter round-tripped through a real YAML parser.
+- **Review and exports.** The reducer and audit log, the order "Start reviewing" walks (the same order as on screen, skipping decided items), restoring a saved review from untrusted storage, and the YAML emitter round-tripped through a real YAML parser.
 - **Fixtures.** Every fixture is re-run through the live normalizer and validator, and placeholders must be marked and claim zero usage.
 
 CI runs the same checks plus a gitleaks secret scan on every push.

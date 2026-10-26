@@ -1180,6 +1180,40 @@ feature("F62", "API build: a key is kept for this tab only when asked, and never
   await settle(s, "key storage");
 });
 
+feature("F63", "A profile's less common values expand, and a chip removes a column from a rule's column list", {}, async (s) => {
+  await pickColumn(s, "property_state");
+  const disclosure = s.page.locator("details").filter({ has: s.page.locator("summary", { hasText: "less common value" }) }).first();
+  await disclosure.locator("summary").click();
+  await poll(async () => (await disclosure.locator("li").count()) === 19, "the 19 less common states");
+  assert.match(norm(await disclosure.locator("summary").textContent()), /19 less common values/, "the disclosure counts them");
+  await settle(s, "less common values");
+
+  await pickColumn(s, "loan_id");
+  const unique = itemWithText(s, "loan_id is unique", "rule:");
+  await unique.getByRole("button", { name: "Edit", exact: true }).click();
+  await unique.getByLabel("Columns", { exact: true }).selectOption("servicer_id");
+  await unique.getByRole("button", { name: "Remove servicer_id" }).click();
+  await poll(async () => (await unique.getByRole("button", { name: "Remove servicer_id" }).count()) === 0, "the chip is removed");
+  await unique.getByRole("button", { name: "Cancel", exact: true }).click();
+  await poll(async () => (await itemWithText(s, "loan_id is unique", "rule:").count()) === 1, "cancel keeps the rule as it was");
+  await settle(s, "column chip removed then cancelled");
+});
+
+feature("F64", "API build: the key dialog's Cancel keeps no key, and Create a key links to the key page in a new tab", { build: "api" }, async (s) => {
+  const banner = () => s.page.locator("div[role='status']").first();
+  await banner().getByRole("button", { name: "Add key" }).click();
+  await liveDialog(s).locator("input[name=key]").fill(FAKE_KEY);
+  await liveDialog(s).getByRole("button", { name: "Cancel", exact: true }).click();
+  await poll(async () => (await liveDialog(s).count()) === 0, "the dialog closes on Cancel");
+  assert.ok(norm(await banner().textContent()).includes("Add your Anthropic API key to run it live."), "Cancel saves no key");
+  await banner().getByRole("button", { name: "Add key" }).click();
+  const link = liveDialog(s).getByRole("link", { name: "Create a key", exact: true });
+  assert.equal(await link.getAttribute("href"), "https://platform.claude.com/settings/keys", "the key page link");
+  assert.equal(await link.getAttribute("target"), "_blank", "the link opens in a new tab");
+  await liveDialog(s).getByRole("button", { name: "Cancel", exact: true }).click();
+  await settle(s, "key dialog cancel");
+});
+
 // ---------------------------------------------------------------- runner
 
 async function detectBuild(browser) {
@@ -1199,7 +1233,9 @@ try {
   const BUILD = await detectBuild(browser);
   console.log(`Serving the ${BUILD} build at ${WEB}${BUILD === "api" ? ` with the API at ${API}` : ""}.\n`);
 
+  const only = process.env.FUNCTIONAL_ONLY ? new Set(process.env.FUNCTIONAL_ONLY.split(",")) : null;
   for (const f of FEATURES) {
+    if (only && !only.has(f.id)) continue;
     if (f.notTestable) {
       rows.push({ id: f.id, name: f.name, viewports: "-", result: "notTestable", detail: f.notTestable });
       continue;

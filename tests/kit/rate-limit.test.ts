@@ -26,9 +26,9 @@ describe("createRateLimiter", () => {
 });
 
 describe("clientIp", () => {
-  it("takes the first forwarded hop", () => {
+  it("takes the last forwarded hop", () => {
     const req = new Request("http://x", { headers: { "x-forwarded-for": "1.2.3.4, 10.0.0.1" } });
-    expect(clientIp(req)).toBe("1.2.3.4");
+    expect(clientIp(req)).toBe("10.0.0.1");
     expect(clientIp(new Request("http://x"))).toBe("local");
   });
 });

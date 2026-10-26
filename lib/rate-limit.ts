@@ -43,8 +43,8 @@ export function createRateLimiter(limit: number, windowMs: number, maxKeys = 10_
   };
 }
 
-/** Best-effort client address. Behind Vercel the first `x-forwarded-for` hop is the client. */
+/** Best-effort client address. Behind Vercel the last `x-forwarded-for` hop is the client. Earlier hops are whatever the visitor sent, so they are not trusted. */
 export function clientIp(req: Request): string {
   const forwarded = req.headers.get("x-forwarded-for");
-  return forwarded?.split(",")[0]?.trim() || req.headers.get("x-real-ip") || "local";
+  return forwarded?.split(",").pop()?.trim() || req.headers.get("x-real-ip") || "local";
 }

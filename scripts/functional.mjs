@@ -966,6 +966,220 @@ feature("F51", "Deployed site and the live-demo badge", {
   notTestable: "Nothing is deployed; the badge links to #run-locally by design.",
 }, async () => {});
 
+feature("F52", "Review queue rows: Approve and Reject on a pending row, Reopen on a decided one, and the Rejected tab", {}, async (s) => {
+  const summaryText = async () => norm(await queueRows(s).first().locator("div.line-clamp-2").textContent());
+  await queue(s);
+  const summary = await summaryText();
+  await queueRows(s).first().getByRole("button", { name: "Approve", exact: true }).click();
+  await poll(async () => (await progressCounts(s)).approved === 1, "row approve");
+  await setQueueStatus(s, "Approved");
+  await poll(async () => (await queueRows(s).count()) === 1, "the approved row listed");
+  assert.equal(await summaryText(), summary, "the approved row is the same suggestion");
+  await queueRows(s).first().getByRole("button", { name: "Reopen", exact: true }).click();
+  await poll(async () => (await progressCounts(s)).approved === 0, "row reopen");
+  await setQueueStatus(s, "Pending");
+  await queueRows(s).first().getByRole("button", { name: "Reject", exact: true }).click();
+  await poll(async () => (await progressCounts(s)).rejected === 1, "row reject");
+  await setQueueStatus(s, "Rejected");
+  await poll(async () => (await queueRows(s).count()) === 1, "the rejected row listed");
+  assert.equal(await summaryText(), summary, "the rejected row is the same suggestion");
+  await queueRows(s).first().getByRole("button", { name: "Reopen", exact: true }).click();
+  await poll(async () => (await progressCounts(s)).rejected === 0, "rejected row reopened");
+  await settle(s, "queue row buttons");
+});
+
+feature("F53", "Review queue bulk: the selection count, Approve selected, and Reopen selected", {}, async (s) => {
+  await queue(s, { kind: "definition" });
+  const boxes = queueRows(s).locator("input[type='checkbox']");
+  await boxes.nth(0).click();
+  await boxes.nth(1).click();
+  await poll(async () => norm(await s.page.locator("label", { hasText: "selected" }).textContent()).includes("2 selected"), "2 selected");
+  await s.page.getByRole("button", { name: "Approve selected" }).click();
+  await poll(async () => (await progressCounts(s)).approved === 2, "2 approved in bulk");
+  await setQueueStatus(s, "Approved");
+  await poll(async () => (await queueRows(s).count()) === 2, "two approved descriptions listed");
+  await s.page.locator("label", { hasText: "Select all" }).locator("input").click();
+  await poll(async () => norm(await s.page.locator("label", { hasText: "selected" }).textContent()).includes("2 selected"), "select all of the approved");
+  await s.page.getByRole("button", { name: "Reopen selected" }).click();
+  await poll(async () => (await progressCounts(s)).approved === 0, "bulk reopen");
+  await settle(s, "bulk reopen");
+});
+
+feature("F54", "Review queue keyboard: Space selects, and the arrow keys move focus like J and K", {}, async (s) => {
+  await queue(s);
+  const rows = queueRows(s);
+  await rows.first().focus();
+  await s.page.keyboard.press(" ");
+  assert.equal(await rows.first().locator("input[type='checkbox']").isChecked(), true, "Space selects the focused row");
+  await s.page.keyboard.press("ArrowDown");
+  const down = await s.page.evaluate(() => [...document.querySelectorAll("ul[aria-label='Suggestions'] > li")].indexOf(document.activeElement));
+  assert.equal(down, 1, "ArrowDown moves to the next row");
+  await s.page.keyboard.press("ArrowUp");
+  const up = await s.page.evaluate(() => [...document.querySelectorAll("ul[aria-label='Suggestions'] > li")].indexOf(document.activeElement));
+  assert.equal(up, 0, "ArrowUp moves back");
+  await s.page.keyboard.press(" ");
+  assert.equal(await rows.first().locator("input[type='checkbox']").isChecked(), false, "Space clears the selection");
+  await settle(s, "keyboard space and arrows");
+});
+
+feature("F55", "Rule editor: allowed values, a choice, a column list, and severity, saved as pending", {}, async (s) => {
+  await pickColumn(s, "servicer_id");
+  const inSet = itemWithText(s, "servicer_id is one of", "rule:");
+  await inSet.getByRole("button", { name: "Edit", exact: true }).click();
+  await inSet.getByLabel("Allowed values", { exact: true }).fill("SV01\nSV02\nSV03");
+  await s.page.getByRole("button", { name: "Save as pending" }).click();
+  const edited = itemWithText(s, "servicer_id is one of: SV01, SV02, SV03", "rule:");
+  await edited.getByText("Not run since the edit").waitFor();
+  assert.equal((await progressCounts(s)).approved, 0, "a pending save is not an approval");
+  await settle(s, "allowed values edited");
+
+  await pickColumn(s, "servicer_loan_number");
+  const typed = itemWithText(s, "servicer_loan_number is a valid integer", "rule:");
+  await typed.getByRole("button", { name: "Edit", exact: true }).click();
+  await typed.getByLabel("Type", { exact: true }).selectOption("decimal");
+  await s.page.getByRole("button", { name: "Save as pending" }).click();
+  await itemWithText(s, "servicer_loan_number is a valid decimal", "rule:").waitFor();
+  await settle(s, "type choice edited");
+
+  await pickColumn(s, "loan_id");
+  const unique = itemWithText(s, "loan_id is unique", "rule:");
+  await unique.getByRole("button", { name: "Edit", exact: true }).click();
+  await unique.getByLabel("Columns", { exact: true }).selectOption("servicer_id");
+  await unique.getByRole("button", { name: "Remove servicer_id" }).waitFor();
+  await s.page.getByRole("button", { name: "Save as pending" }).click();
+  await itemWithText(s, "The combination of loan_id + servicer_id is unique", "rule:").waitFor();
+  await settle(s, "column list edited");
+
+  const severity = itemWithText(s, "The combination of loan_id + servicer_id is unique", "rule:");
+  await severity.getByRole("button", { name: "Edit", exact: true }).click();
+  await severity.getByLabel("Severity", { exact: true }).selectOption("warning");
+  await s.page.getByRole("button", { name: "Save as pending" }).click();
+  await poll(async () => norm(await severity.textContent()).includes("warning"), "the warning severity");
+  await settle(s, "severity edited");
+});
+
+feature("F56", "Save and approve on a rule; Cancel on a description and a label throws the draft away", {}, async (s) => {
+  await pickColumn(s, "servicer_id");
+  const inSet = itemWithText(s, "servicer_id is one of", "rule:");
+  await inSet.getByRole("button", { name: "Edit", exact: true }).click();
+  await inSet.getByLabel("Allowed values", { exact: true }).fill("SV01\nSV02");
+  await s.page.getByRole("button", { name: "Save and approve" }).click();
+  await poll(async () => (await progressCounts(s)).approved === 1, "the rule approved");
+  assert.ok(norm(await itemWithText(s, "servicer_id is one of: SV01, SV02", "rule:").textContent()).includes("Approved"), "the saved rule shows Approved");
+
+  const def = item(s, "def:servicer_id");
+  const defBefore = norm(await def.textContent());
+  await def.getByRole("button", { name: "Edit", exact: true }).click();
+  await def.locator("textarea").fill("A draft that must be thrown away.");
+  await def.getByRole("button", { name: "Cancel", exact: true }).click();
+  await poll(async () => norm(await def.textContent()) === defBefore, "the description is back to its saved text");
+
+  const cls = item(s, "cls:servicer_id");
+  const clsBefore = norm(await cls.textContent());
+  await cls.getByRole("button", { name: "Edit", exact: true }).click();
+  await cls.locator("select").selectOption("Restricted");
+  await cls.getByRole("button", { name: "Cancel", exact: true }).click();
+  await poll(async () => norm(await cls.textContent()) === clsBefore, "the label is back to its saved value");
+  assert.equal((await progressCounts(s)).approved, 1, "cancelling changes nothing in the count");
+  await settle(s, "save and approve, cancel");
+});
+
+feature("F57", "Cross-column relationship: Cancel discards, Save and approve approves", {}, async (s) => {
+  await pickCrossColumn(s);
+  const rel = s.page.locator("[data-review-item^='rel:']").first();
+  const before = norm(await rel.textContent());
+  await rel.getByRole("button", { name: "Edit", exact: true }).click();
+  await rel.locator("textarea").fill("A draft that must be thrown away.");
+  await rel.getByRole("button", { name: "Cancel", exact: true }).click();
+  await poll(async () => norm(await rel.textContent()) === before, "the relationship is back to its text");
+  await rel.getByRole("button", { name: "Edit", exact: true }).click();
+  await rel.locator("textarea").fill("Each loan has one servicer record, approved here.");
+  await rel.getByRole("button", { name: "Save and approve" }).click();
+  await poll(async () => (await progressCounts(s)).approved === 1, "the relationship approved");
+  assert.ok(norm(await rel.textContent()).includes("Each loan has one servicer record, approved here."), "the new text is saved");
+  await settle(s, "relationship save and approve");
+});
+
+feature("F58", "Header shortcut to the data contract appears once something is approved", {}, async (s) => {
+  await pickColumn(s, "loan_id");
+  await item(s, "def:loan_id").locator("[data-approve]").click();
+  await poll(async () => (await progressCounts(s)).approved === 1, "one approval");
+  await progress(s).getByRole("button", { name: "See the data contract", exact: true }).click();
+  await poll(async () => (await viewTitle(s)) === "Exports", "the exports view from the header");
+  await settle(s, "header shortcut");
+});
+
+feature("F59", "Audit log: its close button and a click outside close it; cancelling Start over keeps the log", {}, async (s) => {
+  await pickColumn(s, "loan_id");
+  await item(s, "def:loan_id").locator("[data-approve]").click();
+  await poll(async () => (await progressCounts(s)).approved === 1, "one approval");
+  const openLog = () => topHeader(s).getByRole("button", { name: /Audit log/ }).click();
+  await openLog();
+  await poll(async () => (await liveDialog(s).count()) === 1, "the audit drawer");
+  await liveDialog(s).getByRole("button", { name: "Close audit log", exact: true }).click();
+  await poll(async () => (await liveDialog(s).count()) === 0, "closed with its button");
+  await openLog();
+  await poll(async () => (await liveDialog(s).count()) === 1, "the audit drawer again");
+  if (s.vp === "desktop") {
+    await s.page.mouse.click(3, 3);
+    await poll(async () => (await liveDialog(s).count()) === 0, "closed by a click outside the drawer");
+    await openLog();
+    await poll(async () => (await liveDialog(s).count()) === 1, "the audit drawer a third time");
+  }
+  s.page.once("dialog", (dialog) => dialog.dismiss());
+  await liveDialog(s).getByRole("button", { name: "Start over", exact: true }).click();
+  await poll(async () => norm(await liveDialog(s).textContent()).includes("1 entry for loans_sample.csv"), "the log kept after cancel");
+  assert.equal((await progressCounts(s)).approved, 1, "the review is kept after cancel");
+  await settle(s, "audit cancel");
+});
+
+feature("F60", "Use your own data: closes with its Close button and by a click outside it", {}, async (s) => {
+  await s.page.getByRole("button", { name: /^(Use your own data|Upload)$/ }).click();
+  await liveDialog(s).locator("h2").waitFor();
+  await s.page.mouse.click(3, 3);
+  await poll(async () => (await liveDialog(s).count()) === 0, "closed by a click outside");
+  await settle(s, "upload dialog closed by outside click");
+});
+
+feature("F61", "Export copy: the clipboard holds exactly the text shown in the preview", {}, async (s) => {
+  await s.page.getByRole("button", { name: /^Approve \d+ high-confidence$/ }).click();
+  await goTab(s, "Exports");
+  await s.page.getByRole("button", { name: "Copy", exact: true }).click();
+  await s.page.getByRole("button", { name: "Copied", exact: true }).waitFor({ timeout: 4000 });
+  const clipboard = await s.page.evaluate(() => navigator.clipboard.readText());
+  const preview = await s.page.locator("pre[aria-label^='Preview of']").textContent();
+  assert.equal(clipboard.trimEnd(), preview.trimEnd(), "the clipboard matches the preview");
+  assert.equal(parseYaml(clipboard).contract.review.approved, 98, "the copied contract holds the 98 approvals");
+  await settle(s, "copy export");
+});
+
+feature("F62", "API build: a key is kept for this tab only when asked, and never written to localStorage", { build: "api" }, async (s) => {
+  const stores = () => s.page.evaluate(() => ({ local: JSON.stringify(localStorage), session: JSON.stringify(sessionStorage) }));
+  const banner = () => s.page.locator("div[role='status']").first();
+  await banner().getByRole("button", { name: "Add key" }).click();
+  await liveDialog(s).locator("input[name=key]").fill(FAKE_KEY);
+  await liveDialog(s).getByRole("button", { name: "Use this key" }).click();
+  await poll(async () => (await liveDialog(s).count()) === 0, "the dialog closes");
+  let saved = await stores();
+  assert.equal(saved.local.includes(FAKE_KEY), false, "the key is not in localStorage");
+  assert.equal(saved.session.includes(FAKE_KEY), false, "without Remember the key is not in sessionStorage");
+  await banner().getByRole("button", { name: "Change key" }).click();
+  assert.equal(await liveDialog(s).locator("input[name=remember]").isChecked(), false, "Remember starts unticked");
+  await liveDialog(s).locator("input[name=remember]").check();
+  await liveDialog(s).locator("input[name=key]").fill(FAKE_KEY);
+  await liveDialog(s).getByRole("button", { name: "Use this key" }).click();
+  await poll(async () => (await liveDialog(s).count()) === 0, "the dialog closes after Remember");
+  saved = await stores();
+  assert.equal(saved.session.includes(FAKE_KEY), true, "with Remember the key is in sessionStorage");
+  assert.equal(saved.local.includes(FAKE_KEY), false, "even then it is not in localStorage");
+  await banner().getByRole("button", { name: "Change key" }).click();
+  await liveDialog(s).getByRole("button", { name: "Remove key" }).click();
+  await poll(async () => norm(await banner().textContent()).includes("Add your Anthropic API key to run it live."), "the banner after removal");
+  saved = await stores();
+  assert.equal(saved.session.includes(FAKE_KEY), false, "removing the key clears sessionStorage");
+  await settle(s, "key storage");
+});
+
 // ---------------------------------------------------------------- runner
 
 async function detectBuild(browser) {

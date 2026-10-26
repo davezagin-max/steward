@@ -237,7 +237,8 @@ export const SENSITIVITY_HELP: Record<Sensitivity, string> = {
 
 function fieldValueToText(spec: FieldSpec, value: unknown): string {
   if (spec.kind === "text_list") return Array.isArray(value) ? value.join("\n") : "";
-  if (spec.kind === "optional_number" || spec.kind === "number") return value === null || value === undefined ? "" : String(value);
+  // NaN (a number the form could not read) is shown empty; saving refuses it.
+  if (spec.kind === "optional_number" || spec.kind === "number") return typeof value === "number" && Number.isFinite(value) ? String(value) : "";
   return typeof value === "string" ? value : "";
 }
 
@@ -327,7 +328,10 @@ function RuleField({
           value={fieldValueToText(spec, value)}
           onChange={(e) => {
             const text = e.target.value.trim();
-            onChange(text === "" ? null : Number(text));
+            // A number the browser cannot represent (1e400) reads back as "" with bad input. Keep it
+            // as NaN so the validator refuses it, rather than silently dropping the bound.
+            if (text === "") onChange(e.target.validity.badInput ? Number.NaN : null);
+            else onChange(Number(text));
           }}
           className={`${FIELD} font-mono`}
         />

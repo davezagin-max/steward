@@ -99,8 +99,12 @@ class RateLimiter:
         """FastAPI dependency form."""
         if demo.recording_enabled():
             return
+        # A proxy appends the address it saw, so the last entry is the one a client cannot forge.
+        # The first entry is whatever the client chose to send.
         forwarded = request.headers.get("x-forwarded-for", "")
-        ip = forwarded.split(",")[0].strip() or (request.client.host if request.client else "local")
+        ip = forwarded.split(",")[-1].strip() or (
+            request.client.host if request.client else "local"
+        )
         if not self.check(ip):
             raise HTTPException(status_code=429, detail="Too many requests. Wait a moment.")
 

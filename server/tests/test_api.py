@@ -328,6 +328,20 @@ def test_rate_limiter_blocks_after_the_limit() -> None:
     assert limiter.check("ip", now=1.5)
 
 
+def test_the_rate_limit_counts_the_address_the_proxy_appended_not_the_one_a_client_sent() -> None:
+    # A client can invent any first entry in X-Forwarded-For; the proxy's entry comes last.
+    body = {"csv": "a\n1\n", "rules": []}
+    codes = [
+        client.post(
+            "/api/rules/run",
+            json=body,
+            headers={"x-forwarded-for": f"10.0.0.{n}, 203.0.113.9"},
+        ).status_code
+        for n in range(31)
+    ]
+    assert codes == [200] * 30 + [429]
+
+
 def test_assess_is_rate_limited_per_address() -> None:
     body = {"demoId": "sample-loans", "dataset": "sample"}
     codes = [client.post("/api/assess", json=body).status_code for _ in range(7)]

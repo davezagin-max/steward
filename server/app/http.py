@@ -20,6 +20,7 @@ from fastapi import FastAPI, Header, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse
+from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from . import demo
@@ -180,8 +181,10 @@ def create_app(
         allow_headers=["content-type", "x-anthropic-key"],
     )
 
-    @app.exception_handler(HTTPException)
-    async def http_error(_: Request, error: HTTPException) -> JSONResponse:
+    # Registered on Starlette's base class, which FastAPI's HTTPException extends, so an
+    # unknown route (404) or a wrong method (405) also gets the envelope, not FastAPI's default.
+    @app.exception_handler(StarletteHTTPException)
+    async def http_error(_: Request, error: StarletteHTTPException) -> JSONResponse:
         kind = {401: "auth", 403: "auth", 404: "invalid", 413: "too_large", 429: "rate_limit"}.get(
             error.status_code, "invalid" if error.status_code < 500 else "server"
         )

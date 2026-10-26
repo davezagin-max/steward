@@ -38,6 +38,26 @@ def test_health() -> None:
     assert client.get("/health").json() == {"status": "ok"}
 
 
+def test_unknown_routes_and_wrong_methods_use_the_error_envelope() -> None:
+    missing = client.get("/api/does-not-exist")
+    assert missing.status_code == 404
+    assert missing.json() == {"ok": False, "error": {"kind": "invalid", "message": "Not Found"}}
+    wrong_method = client.get("/api/profile")
+    assert wrong_method.status_code == 405
+    assert wrong_method.json()["ok"] is False
+    assert wrong_method.json()["error"]["kind"] == "invalid"
+
+
+def test_a_lone_surrogate_in_the_csv_is_a_400_in_the_envelope_not_a_500() -> None:
+    body = b'{"csv": "a,b\\n1,\\ud800\\n", "name": "x.csv"}'
+    res = client.post("/api/profile", content=body, headers={"content-type": "application/json"})
+    assert res.status_code == 400
+    assert res.json() == {
+        "ok": False,
+        "error": {"kind": "invalid", "message": "Request body has an invalid shape."},
+    }
+
+
 # ----------------------------------------------------------------- demo mode (the smoke test)
 
 

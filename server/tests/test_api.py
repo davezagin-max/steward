@@ -443,3 +443,48 @@ def test_stream_replays_recorded_events_in_order(monkeypatch: pytest.MonkeyPatch
     assert [f["type"] for f in replayed] == ["meta", "event", "event", "done"]
     assert replayed[1]["event"] == {"step": 1}
     assert replayed[3]["data"] == {"answer": "final"}
+
+
+# ----------------------------------------------------------------- checks made by hand
+
+
+def test_the_default_upload_limits_are_the_documented_ones() -> None:
+    line = "1234567890,abcdefghijklmnopqrstuvwxyz,1234567890,abcdefghijklmnopqrstuvwxyz,1234\n"
+    too_big = "a,b\n" + line * (MAX_UPLOAD_BYTES // len(line) + 2)
+    res = client.post("/api/profile", json={"csv": too_big})
+    assert res.status_code == 400
+    assert res.json()["error"] == {"kind": "invalid", "message": "The file is larger than the 5 MB limit."}  # fmt: skip
+    too_wide = ",".join(f"c{i}" for i in range(81)) + "\n" + ",".join("1" for _ in range(81)) + "\n"
+    res = client.post("/api/profile", json={"csv": too_wide})
+    assert res.json()["error"]["message"] == "The file has 81 columns; the limit is 80."
+
+
+def test_headers_that_are_sql_keywords_profile_and_run_rules() -> None:
+    csv = "order,select,from,group\n" + "\n".join(f"{i},x,{i % 2},{i}" for i in range(1, 21)) + "\n"
+    res = client.post("/api/profile", json={"csv": csv})
+    assert res.status_code == 200, res.text
+    names = [column["name"] for column in res.json()["data"]["profile"]["columns"]]
+    assert names == ["order", "select", "from", "group"]
+    rules = [
+        {"type": "unique", "columns": ["order"]},
+        {"type": "not_null", "column": "select"},
+        {"type": "in_set", "column": "from", "values": ["0", "1"]},
+        {"type": "unique", "columns": ["select", "group"]},
+    ]
+    res = client.post("/api/rules/run", json={"csv": csv, "rules": rules})
+    assert [r["status"] for r in res.json()["data"]["results"]] == ["pass", "pass", "pass", "pass"]
+
+
+def test_a_foreign_origin_gets_no_cross_origin_access() -> None:
+    preflight = client.options(
+        "/api/profile",
+        headers={"origin": "https://evil.example", "access-control-request-method": "POST"},
+    )
+    assert preflight.status_code == 400
+    res = client.post(
+        "/api/rules/run",
+        json={"csv": "a\n1\n", "rules": []},
+        headers={"origin": "https://evil.example"},
+    )
+    assert res.status_code == 200
+    assert "access-control-allow-origin" not in res.headers

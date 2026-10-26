@@ -12,7 +12,7 @@ from fastapi import FastAPI, Response
 from fastapi.testclient import TestClient
 
 from app import demo
-from app.dataset import MAX_ROWS
+from app.dataset import MAX_ROWS, MAX_UPLOAD_BYTES
 from app.http import Live, RateLimiter, get_client, respond_stream
 from app.main import app, assess_rate_limit, data_rate_limit
 from tests.test_assess import ScriptedClient
@@ -153,7 +153,17 @@ def test_body_limits_are_per_path() -> None:
     big = "a\n" + "x" * 80_000 + "\n"
     assert client.post("/api/profile", json={"csv": big}).status_code == 200
     assert client.post("/api/assess", content=b'{"x":"' + b"a" * 600_000 + b'"}').status_code == 413
-    assert client.post("/api/profile", content=b'{"csv":"' + b"a" * 8_000_000 + b'"}').status_code == 413  # fmt: skip
+    assert client.post("/api/profile", content=b'{"csv":"' + b"a" * 12_000_000 + b'"}').status_code == 413  # fmt: skip
+
+
+def test_a_valid_upload_near_the_limit_is_not_refused_because_json_escapes_it() -> None:
+    # 20,000 rows of 225 backslashes: a 4.5 MB file, under both the file and row limits, that
+    # JSON writes out at twice its size. It must still reach the profiler.
+    csv = "a\n" + "\n".join(["\\" * 225] * 20_000) + "\n"
+    assert len(csv.encode()) < MAX_UPLOAD_BYTES
+    res = client.post("/api/profile", json={"csv": csv})
+    assert res.status_code == 200, res.text
+    assert res.json()["data"]["profile"]["row_count"] == 20_000
 
 
 def test_rules_run_on_the_sample_including_an_edited_and_an_invalid_rule() -> None:

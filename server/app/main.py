@@ -39,8 +39,9 @@ from .http import Live, RateLimiter, create_app, get_client, respond_stream
 from .profiler import Profile, model_view, profile_dataset
 from .rules import MAX_RULES_PER_RUN, RuleError, catalog_json, run_rules
 
-# A CSV travels inside a JSON string, so allow for escaping on top of the file limit.
-UPLOAD_BODY_BYTES = int(MAX_UPLOAD_BYTES * 1.4)
+# A CSV travels inside a JSON string, and JSON writes every quote, backslash, tab, and newline
+# as two characters. Twice the file limit covers a file made of nothing else, plus the wrapper.
+UPLOAD_BODY_BYTES = 2 * MAX_UPLOAD_BYTES + 256 * 1024
 ASSESS_STORE = "assess"
 
 app = create_app(
